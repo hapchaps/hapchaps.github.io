@@ -260,6 +260,9 @@
     }
   });
 
+  // Not signed in: the sign-in screen comes up straight away, before anything is tapped.
+  sb.auth.getSession().then(({ data }) => { if (!data || !data.session) { step = 'password'; draw(''); } });
+
   window.BS_CLOUD = {
     api: URL_ + '/functions/v1/bs-phone',
     token: async () => {
