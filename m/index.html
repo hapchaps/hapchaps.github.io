@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BS">
+<meta name="theme-color" content="#0f1419">
+<link rel="apple-touch-icon" href="m-icon.png">
+<link rel="icon" href="m-icon.png">
+<link rel="manifest" href="manifest.json">
+<title>BetaStation</title>
+<style>
+  /* Phone lookup mode for BetaStation. Same palette as the desktop app so the two
+     read as one product; everything here is sized for a thumb, one column, no
+     sideways scrolling. Read-only: the PC stays the master copy. */
+  :root {
+    --bg: #0f1419;
+    --panel: #1a2129;
+    --panel-2: #222c37;
+    --line: #2e3a47;
+    --text: #e6edf3;
+    --muted: #8b9aa8;
+    --accent: #4a9eff;
+    --accent-soft: #1d3a5f;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    --chip: #2a3845;
+    --top: env(safe-area-inset-top, 0px);
+    --bot: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { padding: calc(56px + var(--top)) 0 calc(64px + var(--bot)); min-height: 100vh; }
+  a { color: var(--accent); text-decoration: none; }
+
+  header { position: fixed; top: 0; left: 0; right: 0; z-index: 20; background: var(--bg);
+    border-bottom: 1px solid var(--line); padding: var(--top) 8px 0; }
+  .hbar { height: 55px; display: flex; align-items: center; gap: 6px; }
+  .hbar h1 { flex: 1; font-size: 17px; margin: 0; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; text-align: center; }
+  .hbtn { min-width: 64px; height: 40px; border: 0; background: none; color: var(--accent);
+    font: inherit; font-size: 16px; padding: 0 6px; text-align: left; }
+  .hbtn.r { text-align: right; font-size: 14px; color: var(--muted); }
+  .hbtn[hidden] { visibility: hidden; display: block; }
+
+  nav.tabs { position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; display: flex;
+    background: var(--panel); border-top: 1px solid var(--line); padding-bottom: var(--bot); }
+  nav.tabs a { flex: 1; height: 60px; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px; color: var(--muted); font-size: 12px; font-weight: 600; }
+  nav.tabs a.on { color: var(--accent); }
+  nav.tabs svg { width: 24px; height: 24px; }
+
+  main { padding: 12px 16px; max-width: 640px; margin: 0 auto; }
+  .search { position: sticky; top: calc(56px + var(--top)); z-index: 10; background: var(--bg);
+    margin: -12px -16px 10px; padding: 10px 16px; }
+  .search input { width: 100%; height: 48px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--text); font: inherit; font-size: 17px; padding: 0 14px; outline: none; }
+  .search input:focus { border-color: var(--accent); }
+
+  .card { display: block; cursor: default; background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 10px; color: var(--text); }
+  div.card.tap:active { background: var(--panel-2); }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .grow { flex: 1; min-width: 0; }
+  .t { font-weight: 650; font-size: 16px; overflow-wrap: anywhere; }
+  .s { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 6px; background: var(--chip); color: var(--muted); }
+  .badge.property { color: #7fb8ff; } .badge.entity { color: #c4a5ff; } .badge.contact { color: #7fd99a; }
+  .badge.dnc { background: rgba(248,81,73,.18); color: var(--bad); }
+  .st-dnc           { --hs-c: #ff6b6b; --hs-bg: rgba(255,107,107,.16); }
+  .st-not_worth     { --hs-c: #ffb3d1; --hs-bg: rgba(255,179,209,.14); }
+  .st-needs_contact { --hs-c: #7fb8ff; --hs-bg: rgba(74,158,255,.16); }
+  .st-keep_in_touch { --hs-c: #f2c94c; --hs-bg: rgba(242,201,76,.15); }
+  .st-hot           { --hs-c: #7ee2a0; --hs-bg: rgba(126,226,160,.11); }
+  .badge.stage { color: var(--hs-c); background: var(--hs-bg); }
+
+  h2 { font-size: 13px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--muted); margin: 22px 0 8px; }
+  .hero h1 { font-size: 22px; margin: 0 0 4px; line-height: 1.25; overflow-wrap: anywhere; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 15px; }
+  .kv .k { color: var(--muted); }
+  .kv .v { overflow-wrap: anywhere; }
+
+  .phones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .call { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 14px;
+    border-radius: 22px; background: var(--good); color: #06220d; font-weight: 700; font-size: 15px; }
+  .call.office, .call.home { background: var(--accent-soft); color: #cfe4ff; }
+  .call small { font-weight: 600; opacity: .8; }
+  .call svg { width: 17px; height: 17px; flex: none; }
+  .mail { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border-radius: 22px;
+    background: var(--chip); color: var(--text); font-size: 14px; max-width: 100%; overflow-wrap: anywhere; }
+  .callmini { flex: none; width: 46px; height: 46px; border-radius: 23px; background: var(--good);
+    display: flex; align-items: center; justify-content: center; }
+  .callmini svg { width: 21px; height: 21px; color: #06220d; }
+
+  .note { font-size: 14px; border-left: 3px solid var(--line); padding: 2px 0 2px 10px; margin-top: 8px;
+    color: var(--text); overflow-wrap: anywhere; white-space: pre-wrap; }
+  .note .when { color: var(--muted); font-size: 12.5px; display: block; }
+  .reason { font-size: 14px; color: #ffd2b0; margin-top: 6px; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .reason.open { display: block; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; scrollbar-width: none; }
+  .chips button { flex: none; height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; }
+  .chips button.on { background: var(--accent-soft); color: var(--text); border-color: var(--accent); }
+  .empty { color: var(--muted); text-align: center; padding: 40px 10px; }
+  .more { width: 100%; height: 44px; border-radius: 12px; border: 1px dashed var(--line); background: none;
+    color: var(--accent); font: inherit; font-size: 15px; }
+  .warn { color: var(--warn); }
+  .divider { border-top: 1px solid var(--line); margin: 10px 0; }
+
+  /* actions: Log call + Hot buckets */
+  .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .act { min-height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--accent);
+    background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 700; }
+  .hotrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+  .hotrow .lbl { font-size: 12px; color: var(--muted); font-weight: 700; margin-right: 2px; }
+  .hb { min-height: 34px; padding: 0 11px; border-radius: 17px; border: 1px solid var(--line); background: var(--panel-2);
+    color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; }
+  .hb.on { color: var(--hs-c); background: var(--hs-bg); border-color: var(--hs-c); }
+  .hb.rm { border-style: dashed; }
+
+  /* Log call sheet */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 40; display: flex; align-items: flex-end; }
+  .sheet { width: 100%; max-width: 640px; margin: 0 auto; background: var(--panel); border-radius: 16px 16px 0 0;
+    border: 1px solid var(--line); padding: 16px 16px calc(16px + var(--bot)); }
+  .sheet h3 { margin: 0 0 2px; font-size: 17px; }
+  .sheet textarea { width: 100%; min-height: 110px; margin-top: 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--text); font: inherit; font-size: 16px; padding: 10px; resize: vertical; }
+  .sheet .chips { margin: 10px 0 0; }
+  .sheet .chips button { height: 34px; font-size: 13.5px; }
+  .sheet .btns { display: flex; gap: 10px; margin-top: 12px; }
+  .sheet .btns button { flex: 1; height: 46px; border-radius: 12px; border: 0; font: inherit; font-size: 16px; font-weight: 700; }
+  .sheet .save { background: var(--accent); color: #fff; }
+  .sheet .cancel { background: var(--chip); color: var(--text); }
+  .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(76px + var(--bot)); z-index: 50;
+    background: #23863a; color: #fff; padding: 10px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;
+    max-width: calc(100% - 32px); text-align: center; }
+
+  /* Home */
+  .fake-search { display: flex; align-items: center; gap: 10px; height: 48px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--muted); font-size: 17px; padding: 0 14px; }
+  .fake-search svg { width: 20px; height: 20px; }
+  .qchips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .qchips button { height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--panel);
+    color: var(--text); font: inherit; font-size: 14px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rec { padding: 10px 14px; margin-bottom: 8px; }
+  .rec .t { font-size: 15.5px; }
+  .clear { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline;
+    display: block; margin: 16px auto 0; }
+</style>
+</head>
+<body>
+<header><div class="hbar">
+  <button class="hbtn" id="back" hidden onclick="history.back()">&#8249; Back</button>
+  <h1 id="title">BetaStation</h1>
+  <a class="hbtn r" id="desk" href="/?desktop=1">Desktop</a>
+</div></header>
+
+<main id="view"></main>
+
+<nav class="tabs">
+  <a href="#" id="tab-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1z"/></svg>Home</a>
+  <a href="#search" id="tab-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search</a>
+  <a href="#hot" id="tab-hot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3.5-1.5 5.5-3 7.5C7.5 11.5 7 13 7 14.5 7 18 9.2 21 12 21s5-2.4 5-6c0-2-1-3.6-2-4.8-.2 1.6-1 2.6-2 3 .6-3.8-.2-8-1-11.2z"/></svg>Hot</a>
+</nav>
+
+<!-- Sign-in for the cloud copy of the phone page. phone_app/build.py places this in the page
+     ahead of the app's own script. It signs Hap in with Supabase Auth (password, then the
+     6-digit code once two-step sign-in is set up) and hands the app his token through
+     window.BS_CLOUD. Nothing here is secret: the key below is the project's public key, and
+     every request is still checked against his login on the server. -->
+<style>
+  #gate { position: fixed; inset: 0; z-index: 1000; background: #0f1419; color: #e6edf3; display: none;
+          align-items: center; justify-content: center; padding: 24px; font: 16px -apple-system, "Segoe UI", sans-serif; }
+  #gate.on { display: flex; }
+  #gate form { width: 100%; max-width: 340px; background: #1a2129; border: 1px solid #2e3a47; border-radius: 14px; padding: 22px 20px; }
+  #gate h1 { font-size: 20px; margin: 0 0 4px; }
+  #gate p { color: #8b9aa8; font-size: 13.5px; margin: 0 0 16px; }
+  #gate label { display: block; font-size: 12.5px; color: #8b9aa8; margin: 12px 0 5px; }
+  #gate input { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; color: #e6edf3; background: #0f1419;
+                border: 1px solid #2e3a47; border-radius: 10px; }
+  #gate button { width: 100%; margin-top: 18px; padding: 13px; font-size: 16px; font-weight: 600; color: #fff; background: #4a9eff;
+                 border: 0; border-radius: 10px; }
+  #gate button.quiet { background: transparent; color: #8b9aa8; font-weight: 500; margin-top: 8px; }
+  #gate .err { color: #ffb3ae; font-size: 13.5px; min-height: 18px; margin-top: 12px; }
+  #gate img { display: block; margin: 8px auto; background: #fff; border-radius: 8px; padding: 6px; width: 190px; height: 190px; }
+</style>
+<div id="gate"><form id="gate-form" autocomplete="on"></form></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  const URL_ = 'https://gpgeevlmecgomazqyhdz.supabase.co', KEY = 'sb_publishable_CjDdEouLDrWLgLI73LO4Sg_Lo5QY9V9';
+  const sb = supabase.createClient(URL_, KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'bs-phone-auth' } });
+  const gate = document.getElementById('gate'), form = document.getElementById('gate-form');
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let step = 'password', factorId = null;
+
+  function draw(message) {
+    gate.classList.add('on');
+    if (step === 'password') {
+      form.innerHTML = '<h1>BetaStation</h1><p>Hap only.</p>' +
+        '<label for="g-email">Email</label><input id="g-email" type="email" autocomplete="username" inputmode="email" required>' +
+        '<label for="g-pass">Password</label><input id="g-pass" type="password" autocomplete="current-password" required>' +
+        '<button type="submit">Sign in</button><div class="err">' + esc(message) + '</div>';
+    } else if (step === 'code') {
+      form.innerHTML = '<h1>Enter your code</h1><p>The 6-digit code from your authenticator app.</p>' +
+        '<label for="g-code">Code</label><input id="g-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required>' +
+        '<button type="submit">Continue</button><div class="err">' + esc(message) + '</div>';
+    } else if (step === 'enroll') {
+      form.innerHTML = '<h1>Set up two-step sign-in</h1><p>Scan this with an authenticator app (the one you use for Supabase works), then enter the 6-digit code it shows.</p>' +
+        '<img alt="QR code" src="' + esc(form.dataset.qr) + '">' +
+        '<label for="g-code">Code</label><input id="g-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required>' +
+        '<button type="submit">Turn it on</button><button type="button" class="quiet" id="g-skip">Not now</button><div class="err">' + esc(message) + '</div>';
+      document.getElementById('g-skip').onclick = () => location.reload();
+    }
+    const first = form.querySelector('input');
+    if (first) first.focus();
+  }
+
+  // After the password: ask for the code if one is set up, offer to set one up if not.
+  async function afterPassword() {
+    const { data: level } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    const { data: factors } = await sb.auth.mfa.listFactors();
+    const totp = ((factors && factors.totp) || []).find(f => f.status === 'verified');
+    if (totp && level && level.currentLevel !== 'aal2') { step = 'code'; factorId = totp.id; return draw(''); }
+    if (!totp && !sessionStorage.getItem('bs-phone-skip-mfa')) {
+      // A set-up that was started and never finished is cleared before starting again.
+      for (const f of ((factors && factors.all) || []).filter(f => f.status !== 'verified')) await sb.auth.mfa.unenroll({ factorId: f.id });
+      const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'BetaStation phone ' + Date.now() });
+      if (!error && data) { step = 'enroll'; factorId = data.id; form.dataset.qr = data.totp.qr_code; sessionStorage.setItem('bs-phone-skip-mfa', '1'); return draw(''); }
+    }
+    location.reload();
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const button = form.querySelector('button[type=submit]');
+    button.disabled = true;
+    try {
+      if (step === 'password') {
+        const { error } = await sb.auth.signInWithPassword({ email: document.getElementById('g-email').value.trim(), password: document.getElementById('g-pass').value });
+        if (error) return draw('That email and password did not match.');
+        return await afterPassword();
+      }
+      const { error } = await sb.auth.mfa.challengeAndVerify({ factorId, code: document.getElementById('g-code').value.trim() });
+      if (error) return draw('That code did not work. Try the next one.');
+      location.reload();
+    } catch (err) {
+      draw('Could not reach the server. Check your connection and try again.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  window.BS_CLOUD = {
+    api: URL_ + '/functions/v1/bs-phone',
+    token: async () => {
+      const { data } = await sb.auth.getSession();
+      if (!data || !data.session) { step = 'password'; draw(''); throw new Error('Signed out'); }
+      return data.session.access_token;
+    },
+    signIn: async () => {
+      // A 401 with a session means the server wants the second step.
+      const { data } = await sb.auth.getSession();
+      if (data && data.session) return afterPassword().catch(() => { step = 'password'; draw(''); });
+      step = 'password'; draw('Please sign in again.');
+    },
+    signOut: async () => { await sb.auth.signOut(); step = 'password'; draw(''); },
+  };
+})();
+</script>
+
+<script>
+const $view = document.getElementById('view');
+// The hosted copy has no desktop app behind it; offer sign-out there instead.
+if (window.BS_HOSTED) { const d = document.getElementById('desk'); d.textContent = 'Sign out'; d.href = '/logout'; }
+const $title = document.getElementById('title');
+const $back = document.getElementById('back');
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// The cloud copy of this page (a static file, with Supabase behind it) sets
+// window.BS_CLOUD = {api, token(), signIn(), signOut()} before this script runs: requests
+// then go to that API with the signed-in user's token instead of to this page's own server.
+const CLOUD = window.BS_CLOUD || null;
+async function apiFetch(url, init) {
+  if (!CLOUD) return fetch(url, Object.assign({credentials: 'same-origin'}, init || {}));
+  const headers = Object.assign({}, (init && init.headers) || {}, {Authorization: 'Bearer ' + await CLOUD.token()});
+  return fetch(CLOUD.api + url, Object.assign({}, init || {}, {headers}));
+}
+if (CLOUD) {
+  const d = document.getElementById('desk');
+  d.textContent = 'Sign out'; d.href = '#';
+  d.addEventListener('click', e => { e.preventDefault(); CLOUD.signOut(); });
+}
+async function getJSON(url) {
+  const r = await apiFetch(url);
+  if (r.status === 401 && CLOUD) { CLOUD.signIn(); throw new Error('Signed out'); }
+  // Hosted copy: an expired sign-in goes back to the login page, not an error card.
+  if (r.status === 401 && window.BS_HOSTED) { location.href = '/login'; throw new Error('Signed out'); }
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || ('HTTP ' + r.status));
+  return r.json();
+}
+
+async function postJSON(url, body) {
+  const r = await apiFetch(url, {method: 'POST',
+    headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  if (r.status === 401 && CLOUD) { CLOUD.signIn(); throw new Error('Signed out'); }
+  if (r.status === 401 && window.BS_HOSTED) { location.href = '/login'; throw new Error('Signed out'); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.error) throw new Error(d.error || ('HTTP ' + r.status));
+  return d;
+}
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+// History lives on this phone only (localStorage): nothing about it touches the data or
+// the server. Wrapped because private browsing can refuse storage outright.
+function lsGet(k, dflt) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : dflt; } catch (e) { return dflt; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function remember(item) {
+  const list = lsGet('bsm.recent', []).filter(r => !(r.k === item.k && r.id === item.id));
+  list.unshift({...item, t: Date.now()});
+  lsSet('bsm.recent', list.slice(0, 60));
+}
+function rememberSearch(q) {
+  q = (q || '').trim();
+  if (q.length < 2) return;
+  const list = lsGet('bsm.searches', []).filter(x => x.toLowerCase() !== q.toLowerCase());
+  list.unshift(q);
+  lsSet('bsm.searches', list.slice(0, 8));
+}
+
+// "Catanzarite, Kenneth" reads backwards on a call sheet; prefer first + last.
+function personName(c) {
+  const fl = [c.first_name, c.last_name].filter(Boolean).join(' ');
+  return fl || c.full_name_raw || c.name || 'Unnamed';
+}
+
+const PHONE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 013 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>';
+
+function telHref(num) {
+  const main = String(num).split(/x|ext/i)[0];
+  let d = main.replace(/\D/g, '');
+  if (d.length === 10) d = '1' + d;
+  return 'tel:+' + d;
+}
+// Cell first, always (standing rule), then office, then home.
+function phoneList(c) {
+  const out = [];
+  const seen = new Set();
+  for (const [kind, label, v] of [['cell', 'Cell', c.phone_mobile], ['office', 'Office', c.phone_office], ['home', 'Home', c.phone_home]]) {
+    if (!v) continue;
+    const key = String(v).replace(/\D/g, '');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({kind, label, num: v});
+  }
+  return out;
+}
+function callBtn(p) {
+  return `<a class="call ${p.kind}" href="${telHref(p.num)}" >${PHONE_SVG}<span><small>${esc(p.label)}</small> ${esc(p.num)}</span></a>`;
+}
+function phonesHTML(c) {
+  const ph = phoneList(c).map(callBtn);
+  const em = [c.email, c.email_alt].filter(Boolean)
+    .map(e => `<a class="mail" href="mailto:${esc(e)}" >${esc(e)}</a>`);
+  return ph.length || em.length ? `<div class="phones">${ph.join('')}${em.join('')}</div>` : '';
+}
+
+function fmtDate(s) {
+  if (!s) return '';
+  const d = new Date(String(s).length <= 10 ? s + 'T12:00:00' : s);
+  if (isNaN(d)) return esc(s);
+  const days = Math.floor((Date.now() - d) / 864e5);
+  const md = d.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric'});
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 45) return `${md} (${days}d ago)`;
+  return md;
+}
+function sizeText(p) {
+  const n = p.total_units || p.certified_beds || p.rcfe_capacity || p.units;
+  if (!n) return '';
+  return p.asset_class === 'SNF' && !p.total_units ? `${n} beds` : `${n} units`;
+}
+function joinDot(parts) { return parts.filter(Boolean).map(esc).join(' · '); }
+
+function notesHTML(acts, limit = 5) {
+  if (!acts || !acts.length) return '';
+  const rows = acts.slice(0, limit).map(a => {
+    const who = [a.contact_name, a.property_name].filter(Boolean).join(' · ');
+    const type = a.activity_type ? a.activity_type[0].toUpperCase() + a.activity_type.slice(1) : 'Note';
+    return `<div class="note"><span class="when">${esc(type)} · ${fmtDate(a.occurred_at || a.created_at)}${who ? ' · ' + esc(who) : ''}</span>${esc(a.body || a.summary || '')}</div>`;
+  });
+  return `<h2>Call log</h2><div class="card">${rows.join('')}</div>`;
+}
+
+function contactCard(c, sub) {
+  const dnc = c.do_not_contact ? ' <span class="badge dnc">Do not contact</span>' : '';
+  return `<div class="card tap" data-go="#c/${c.id}">
+    <div class="t">${esc(personName(c))}${dnc}</div>
+    ${sub ? `<div class="s">${esc(sub)}</div>` : ''}
+    ${c.last_touch_date ? `<div class="s">Last touch ${fmtDate(c.last_touch_date)}</div>` : ''}
+    ${phonesHTML(c)}
+  </div>`;
+}
+function propCard(p, extra) {
+  return `<div class="card tap" data-go="#p/${p.id}">
+    <div class="t">${esc(p.name)}</div>
+    <div class="s">${joinDot([[p.city, p.state].filter(Boolean).join(', '), p.asset_label, sizeText(p), extra])}</div>
+  </div>`;
+}
+// Long lists collapse behind a "Show all" button so a 90-property owner still
+// opens to something readable.
+function listWithMore(items, n) {
+  if (items.length <= n) return items.join('');
+  const id = 'more' + Math.random().toString(36).slice(2, 8);
+  return items.slice(0, n).join('') +
+    `<div id="${id}" hidden>${items.slice(n).join('')}</div>` +
+    `<button class="more" onclick="document.getElementById('${id}').hidden=false;this.remove()">Show all ${items.length}</button>`;
+}
+
+/* ---------- Log call ---------- */
+// Same call log the desktop writes. On the hosted copy it also rides back to the PC on
+// the next Push to Phone, so the toast says so.
+const ACT_KEY = {property: 'property_id', entity: 'entity_id', contact: 'contact_id'};
+function logBtn(kind, id, name) {
+  return `<button class="act" data-log="${kind}|${id}" data-name="${esc(name)}">+ Log call</button>`;
+}
+function openLog(kind, id, name) {
+  const types = [['call', 'Call'], ['email', 'Email'], ['meeting', 'Meeting'], ['note', 'Note']];
+  const quick = ['No answer', 'Left VM', 'Spoke with them', 'Call back'];
+  const bg = document.createElement('div');
+  bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet" role="dialog" aria-label="Log call">
+    <h3>Log call</h3><div class="s">${esc(name)}</div>
+    <div class="chips types">${types.map(([k, l], i) => `<button type="button" data-t="${k}" class="${i ? '' : 'on'}">${l}</button>`).join('')}</div>
+    <div class="chips quick">${quick.map(q => `<button type="button" data-q="${q}">${q}</button>`).join('')}</div>
+    <textarea placeholder="What happened?"></textarea>
+    <div class="btns"><button type="button" class="cancel">Cancel</button><button type="button" class="save">Save</button></div>
+  </div>`;
+  document.body.appendChild(bg);
+  const ta = bg.querySelector('textarea');
+  let type = 'call';
+  bg.addEventListener('click', async e => {
+    e.stopPropagation();
+    if (e.target === bg || e.target.closest('.cancel')) return bg.remove();
+    const t = e.target.closest('[data-t]');
+    if (t) { type = t.dataset.t; bg.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', b === t)); return; }
+    const q = e.target.closest('[data-q]');
+    if (q) { ta.value = ta.value.trim() ? ta.value.trim() + '. ' + q.dataset.q : q.dataset.q; ta.focus(); return; }
+    if (e.target.closest('.save')) {
+      const body = ta.value.trim();
+      if (!body) { ta.focus(); return; }
+      const btn = e.target.closest('.save');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        await postJSON('/api/activities', {activity_type: type, body, [ACT_KEY[kind]]: id});
+        bg.remove();
+        toast(window.BS_HOSTED && !CLOUD ? 'Logged. It reaches BS on your PC at the next Push to Phone.' : 'Logged.');
+        refresh();
+      } catch (err) { btn.disabled = false; btn.textContent = 'Save'; alert('Could not save: ' + err.message); }
+    }
+  });
+  setTimeout(() => ta.focus(), 60);
+}
+
+/* ---------- Hot buckets ---------- */
+const BUCKETS = [['hot', 'Hot · BOV'], ['keep_in_touch', 'Keep in touch'], ['needs_contact', 'Needs contact'], ['dnc', 'DNC · yelled at'], ['not_worth', 'DNC · not worth calling']];
+// A record page: put it on the list, move it, or take it off.
+function hotRow(kind, id, cur) {
+  return `<div class="hotrow" data-hk="${kind}" data-hi="${id}"><span class="lbl">Hot</span>${
+    BUCKETS.map(([k, l]) => `<button class="hb st-${k}${cur === k ? ' on' : ''}" data-set="${k}">${l}</button>`).join('')}${
+    cur ? '<button class="hb rm" data-set="">Remove</button>' : ''}</div>`;
+}
+// A Hot card: move the whole owner card, every starred record on it.
+function hotCardRow(g) {
+  return `<div class="hotrow" data-refs="${esc(JSON.stringify(g.refs || []))}"><span class="lbl">Move to</span>${
+    BUCKETS.map(([k, l]) => `<button class="hb st-${k}${g.stage === k ? ' on' : ''}" data-stage-to="${k}">${l}</button>`).join('')}</div>`;
+}
+async function hotStageOf(kind, id) {
+  try { const d = await getJSON('/api/hot/ids'); return (d.stages || {})[kind + ':' + id] || ''; }
+  catch (e) { return ''; }
+}
+document.addEventListener('click', async e => {
+  const log = e.target.closest('[data-log]');
+  if (log) { const [k, i] = log.dataset.log.split('|'); return openLog(k, i, log.dataset.name); }
+  const set = e.target.closest('[data-set]');
+  if (set) {
+    const row = set.closest('.hotrow');
+    const stage = set.dataset.set;
+    try {
+      await postJSON('/api/hot', stage ? {kind: row.dataset.hk, id: row.dataset.hi, stage, on: true}
+                                       : {kind: row.dataset.hk, id: row.dataset.hi, on: false});
+      toast(stage ? 'Moved to ' + BUCKETS.find(b => b[0] === stage)[1] : 'Removed from Hot');
+      refresh();
+    } catch (err) { alert('Could not save: ' + err.message); }
+    return;
+  }
+  const mv = e.target.closest('[data-stage-to]');
+  if (mv) {
+    const refs = JSON.parse(mv.closest('.hotrow').dataset.refs || '[]');
+    try {
+      await postJSON('/api/hot/stage', {stage: mv.dataset.stageTo, refs});
+      toast('Moved to ' + BUCKETS.find(b => b[0] === mv.dataset.stageTo)[1]);
+      refresh();
+    } catch (err) { alert('Could not save: ' + err.message); }
+  }
+});
+
+function setHeader(title, back) {
+  $title.textContent = title;
+  $back.hidden = !back;
+  document.title = title === 'BetaStation' ? 'BetaStation' : title + ' · BS';
+}
+function setTab(name) {
+  document.getElementById('tab-home').classList.toggle('on', name === 'home');
+  document.getElementById('tab-search').classList.toggle('on', name === 'search');
+  document.getElementById('tab-hot').classList.toggle('on', name === 'hot');
+}
+function loading() { $view.innerHTML = '<div class="empty">Loading…</div>'; }
+function fail(e) { $view.innerHTML = `<div class="empty">Could not load: ${esc(e.message)}</div>`; }
+
+/* ---------- home ---------- */
+const SEARCH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>';
+function dayLabel(t) {
+  const d = new Date(t), today = new Date();
+  const start = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((start(today) - start(d)) / 864e5);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  if (diff < 7) return d.toLocaleDateString('en-US', {weekday: 'long'});
+  return 'Earlier';
+}
+function viewHome() {
+  setHeader('BetaStation', false); setTab('home');
+  const recent = lsGet('bsm.recent', []);
+  const searches = lsGet('bsm.searches', []);
+  const label = {p: 'Property', e: 'Company', c: 'Person'};
+  const cls = {p: 'property', e: 'entity', c: 'contact'};
+  let html = `<a class="fake-search" href="#search">${SEARCH_SVG}Search owners, properties, people</a>`;
+  if (searches.length) {
+    html += `<h2>Recent searches</h2><div class="qchips">${searches.map(q => `<button data-q-go="${esc(q)}">${esc(q)}</button>`).join('')}</div>`;
+  }
+  if (recent.length) {
+    let cur = null;
+    for (const r of recent) {
+      const day = dayLabel(r.t);
+      if (day !== cur) { html += `<h2>${day}</h2>`; cur = day; }
+      const time = new Date(r.t).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+      html += `<div class="card tap rec" data-go="#${r.k}/${r.id}"><div class="row"><div class="grow">
+          <div class="s"><span class="badge ${cls[r.k]}">${label[r.k]}</span> ${day === 'Earlier' ? '' : time}</div>
+          <div class="t" style="margin-top:3px">${esc(r.title)}</div>
+          ${r.sub ? `<div class="s">${esc(r.sub)}</div>` : ''}
+        </div>${r.phone ? `<a class="callmini" href="${telHref(r.phone)}" aria-label="Call ${esc(r.phone)}">${PHONE_SVG}</a>` : ''}</div></div>`;
+    }
+    html += `<button class="clear" id="clearhist">Clear history on this phone</button>`;
+  } else {
+    html += `<div class="empty">Properties, companies and people you open show up here, newest first, so you can get back to them later in the day.</div>`;
+  }
+  $view.innerHTML = html;
+  $view.querySelectorAll('[data-q-go]').forEach(b => b.addEventListener('click', () => {
+    lastQuery = b.dataset.qGo; sessionStorageSet('bsm.q', lastQuery); location.hash = 'search';
+  }));
+  const clr = document.getElementById('clearhist');
+  if (clr) clr.addEventListener('click', () => {
+    if (confirm('Clear recently viewed and recent searches on this phone?')) {
+      lsSet('bsm.recent', []); lsSet('bsm.searches', []); viewHome();
+    }
+  });
+}
+
+/* ---------- search ---------- */
+let lastQuery = sessionStorageGet('bsm.q') || '';
+let searchSeq = 0;
+function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+function sessionStorageSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
+
+function viewSearch() {
+  setHeader('Search', false); setTab('search');
+  $view.innerHTML = `<div class="search"><input id="q" type="search" placeholder="Owner, property, person, phone…"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"></div>
+    <div id="results"></div>`;
+  const q = document.getElementById('q');
+  q.value = lastQuery;
+  let t;
+  q.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => runSearch(q.value), 140); });
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') q.blur(); });
+  if (lastQuery) runSearch(lastQuery); else document.getElementById('results').innerHTML =
+    '<div class="empty">Search by owner, property, person, city or phone number.</div>';
+  setTimeout(() => q.focus(), 50);
+}
+async function runSearch(text) {
+  lastQuery = text; sessionStorageSet('bsm.q', text);
+  const box = document.getElementById('results');
+  if (!box) return;
+  if (!text.trim()) { box.innerHTML = ''; return; }
+  const seq = ++searchSeq;
+  let data;
+  try { data = await getJSON('/api/quick?q=' + encodeURIComponent(text)); }
+  catch (e) { if (seq === searchSeq) box.innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  if (seq !== searchSeq) return;   // a newer keystroke already answered
+  const rows = (data.results || []).filter(r => ['property', 'entity', 'contact'].includes(r.type));
+  if (!rows.length) { box.innerHTML = '<div class="empty">No matches.</div>'; return; }
+  const label = {property: 'Property', entity: 'Company', contact: 'Person'};
+  const route = {property: 'p', entity: 'e', contact: 'c'};
+  box.innerHTML = rows.map(r => {
+    const ph = r.type === 'contact' && r.extra && r.extra.phone;
+    return `<div class="card tap" data-go="#${route[r.type]}/${r.id}"><div class="row"><div class="grow">
+        <span class="badge ${r.type}">${label[r.type]}</span>
+        <div class="t" style="margin-top:4px">${esc(r.title)}</div>
+        ${r.subtitle ? `<div class="s">${esc(r.subtitle)}</div>` : ''}
+        ${r.meta ? `<div class="s">${esc(r.meta)}</div>` : ''}
+      </div>${ph ? `<a class="callmini" href="${telHref(ph)}"  aria-label="Call ${esc(ph)}">${PHONE_SVG}</a>` : ''}</div></div>`;
+  }).join('');
+}
+
+/* ---------- property ---------- */
+async function viewProperty(id) {
+  setHeader('Property', true); setTab(''); loading();
+  let d;
+  try { d = await getJSON('/api/property/' + id); } catch (e) { return fail(e); }
+  const p = d.property;
+  setHeader(p.name, true);
+  remember({k: 'p', id, title: p.name, sub: [[p.city, p.state].filter(Boolean).join(', '), p.asset_label].filter(Boolean).join(' · '), phone: ''});
+  const hotCur = await hotStageOf('property', id);
+  const addr = [p.primary_address, [p.city, p.state].filter(Boolean).join(', '), p.zip].filter(Boolean).join(' ');
+  const mapUrl = 'https://maps.apple.com/?q=' + encodeURIComponent(addr);
+  const facts = [];
+  facts.push(['Type', p.asset_label]);
+  const size = p.total_units ? `${p.total_units} units` : (d.snf && d.snf.certified_beds ? `${d.snf.certified_beds} beds` : (d.al && d.al.rcfe_capacity ? `${d.al.rcfe_capacity} licensed beds` : ''));
+  if (size) facts.push(['Size', size]);
+  if (p.year_built) facts.push(['Built', p.year_built + (p.year_renovated ? `, renovated ${p.year_renovated}` : '')]);
+  if (p.last_contact_date) facts.push(['Last contact', fmtDate(p.last_contact_date)]);
+
+  const who = (row, label) => {
+    if (!row || !row.name) return '';
+    const name = row.entity_id ? `<a href="#e/${row.entity_id}">${esc(row.name)}</a>` : esc(row.name);
+    const tail = row.portfolio && row.portfolio !== row.name ? ` <span class="s">(${esc(row.portfolio)})</span>` : '';
+    const conf = row.confidence && row.confidence !== 'confirmed' ? ` <span class="s warn">${esc(row.confidence)}</span>` : '';
+    return `<div class="k">${label}</div><div class="v">${name}${tail}${conf}</div>`;
+  };
+
+  // Owner-side people first: the company phone and key contacts on each owner
+  // entity, then the people linked to the building itself.
+  const ownerCalls = [];
+  const seenEnt = new Set();
+  for (const grp of d.ownership || []) {
+    if (grp.role_type === 'lender') continue;
+    for (const e of grp.entities) {
+      if (seenEnt.has(e.entity_id)) continue;
+      seenEnt.add(e.entity_id);
+      const ci = e.contact_info || {};
+      const people = (e.people || []).map(pp => contactCard(pp, pp.title || e.display_name));
+      if (ci.phone || ci.phone_alt || ci.email || people.length) {
+        ownerCalls.push(`<div class="card"><div class="s">${esc(grp.label)}</div>
+          <div class="t"><a href="#e/${e.entity_id}">${esc(e.display_name || e.legal_name)}</a></div>
+          ${phonesHTML({phone_office: ci.phone, phone_home: ci.phone_alt, email: ci.email})}</div>`, ...people);
+      }
+    }
+  }
+  const contacts = (d.contacts || []).map(c => contactCard(c, [c.role_label, c.title, c.employer_name].filter(Boolean).join(' · ')));
+
+  const roles = (d.ownership || []).map(grp => `<div class="k">${esc(grp.label)}</div><div class="v">${
+    grp.entities.map(e => `<a href="#e/${e.entity_id}">${esc(e.display_name || e.legal_name)}</a>`).join('<br>')}</div>`).join('');
+
+  $view.innerHTML = `
+    <div class="hero"><h1>${esc(p.name)}</h1>
+      <div class="s"><a href="${mapUrl}" target="_blank" rel="noopener">${esc(addr)}</a></div>
+      <div class="acts">${logBtn('property', id, p.name)}</div>
+      ${hotRow('property', id, hotCur)}</div>
+    <h2>Ownership</h2>
+    <div class="card"><div class="kv">
+      ${who(p.owner_row, 'Owner')}${who(p.operator_row, 'Operator')}
+      ${!p.owner_row && !p.operator_row ? '<div class="k">Owner</div><div class="v s">Not on file</div>' : ''}
+    </div></div>
+    ${ownerCalls.length ? `<h2>Owner contacts</h2>${ownerCalls.join('')}` : ''}
+    ${contacts.length ? `<h2>People at this property</h2>${listWithMore(contacts, 5)}` : ''}
+    <h2>Property</h2>
+    <div class="card"><div class="kv">${facts.map(([k, v]) => `<div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`).join('')}</div></div>
+    ${notesHTML(d.activities)}
+    ${roles ? `<h2>All roles</h2><div class="card"><div class="kv">${roles}</div></div>` : ''}
+  `;
+}
+
+/* ---------- company ---------- */
+async function viewEntity(id) {
+  setHeader('Company', true); setTab(''); loading();
+  let d;
+  try { d = await getJSON('/api/entity/' + id); } catch (e) { return fail(e); }
+  const e = d.entity;
+  const name = e.display_name || e.legal_name;
+  setHeader(name, true);
+  const ci = d.company_info || {};
+  remember({k: 'e', id, title: name, sub: 'Company', phone: ci.phone || ''});
+  const hotCur = await hotStageOf('entity', id);
+  // Key people (the top five per company) lead; everyone else sits behind "Show all".
+  const people = (d.contacts || []).slice().sort((a, b) => (b.is_key ? 1 : 0) - (a.is_key ? 1 : 0))
+    .map(c => contactCard(c, c.key_role || c.employment_title));
+  // One card per building, even when the company holds several roles on it.
+  const byId = new Map();
+  for (const p of d.properties || []) {
+    const cur = byId.get(p.id);
+    if (cur) { if (!cur.roles.includes(p.role_label)) cur.roles.push(p.role_label); }
+    else byId.set(p.id, {...p, roles: [p.role_label]});
+  }
+  const props = [...byId.values()].map(p => propCard(p, p.roles.join(', ')));
+  $view.innerHTML = `
+    <div class="hero"><h1>${esc(name)}</h1>
+      <div class="s">${joinDot([e.kind && e.kind !== 'UNKNOWN' ? e.kind : '', `${props.length} ${props.length === 1 ? 'property' : 'properties'}`,
+        e.last_contact_date ? 'last contact ' + fmtDate(e.last_contact_date) : ''])}</div>
+      ${ci.contact ? `<div class="s">Contact: ${esc(ci.contact)}</div>` : ''}
+      ${phonesHTML({phone_office: ci.phone, phone_home: ci.phone_alt, email: ci.email})}
+      ${ci.website ? `<div class="s" style="margin-top:8px"><a href="${esc(/^https?:/.test(ci.website) ? ci.website : 'https://' + ci.website)}" target="_blank" rel="noopener">${esc(ci.website)}</a></div>` : ''}
+      <div class="acts">${logBtn('entity', id, name)}</div>
+      ${hotRow('entity', id, hotCur)}
+    </div>
+    ${people.length ? `<h2>People</h2>${listWithMore(people, 5)}` : '<h2>People</h2><div class="card s">No contacts on file.</div>'}
+    ${notesHTML(d.activities)}
+    ${props.length ? `<h2>Properties</h2>${listWithMore(props, 8)}` : ''}
+  `;
+}
+
+/* ---------- person ---------- */
+async function viewContact(id) {
+  setHeader('Person', true); setTab(''); loading();
+  let d;
+  try { d = await getJSON('/api/contact/' + id); } catch (e) { return fail(e); }
+  const c = d.contact;
+  const name = personName(c);
+  setHeader(name, true);
+  const emp = (d.employments || []).find(j => !j.effective_to);
+  remember({k: 'c', id, title: name, sub: [c.title, emp && (emp.display_name || emp.legal_name)].filter(Boolean).join(' · '),
+            phone: (phoneList(c)[0] || {}).num || ''});
+  const hotCur = await hotStageOf('contact', id);
+  const jobs = (d.employments || []).filter(j => !j.effective_to).map(j =>
+    `<div><a href="#e/${j.entity_id}">${esc(j.display_name || j.legal_name)}</a>${j.title && j.title !== c.title ? ` <span class="s">${esc(j.title)}</span>` : ''}</div>`);
+  const props = (d.properties || []).map(p => propCard(p));
+  $view.innerHTML = `
+    <div class="hero"><h1>${esc(name)}</h1>
+      ${c.title ? `<div class="s">${esc(c.title)}</div>` : ''}
+      ${c.do_not_contact ? '<div style="margin-top:6px"><span class="badge dnc">Do not contact</span></div>' : ''}
+      ${c.last_touch_date ? `<div class="s">Last touch ${fmtDate(c.last_touch_date)}</div>` : ''}
+      ${phonesHTML(c) || '<div class="s" style="margin-top:8px">No phone or email on file.</div>'}
+      <div class="acts">${logBtn('contact', id, name)}</div>
+      ${hotRow('contact', id, hotCur)}
+    </div>
+    ${jobs.length ? `<h2>Company</h2><div class="card">${jobs.join('')}</div>` : ''}
+    ${notesHTML(d.activities)}
+    ${props.length ? `<h2>Properties</h2>${listWithMore(props, 8)}` : ''}
+  `;
+}
+
+/* ---------- hot prospects ---------- */
+const STAGES = [['', 'All'], ['not_worth', 'DNC · not worth calling'], ['dnc', 'DNC · yelled at'], ['needs_contact', 'Needs contact'], ['keep_in_touch', 'Keep in touch'], ['hot', 'Hot · BOV']];
+let hotStage = sessionStorageGet('bsm.stage') || '';
+async function viewHot() {
+  setHeader('Hot Prospects', false); setTab('hot'); loading();
+  let d;
+  try { d = await getJSON('/api/hot' + (hotStage ? '?stage=' + hotStage : '')); } catch (e) { return fail(e); }
+  const counts = d.stage_counts || {};
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const chips = STAGES.map(([k, l]) => `<button class="${k === hotStage ? 'on' : ''}" data-stage="${k}">${esc(l)} ${k ? counts[k] ?? 0 : total}</button>`).join('');
+  const route = {entity: 'e', contact: 'c', property: 'p'};
+  const cards = (d.prospects || []).map(g => {
+    const href = route[g.group_kind] ? `#${route[g.group_kind]}/${g.group_id}` : '#hot';
+    const last = g.last_contact || g.owner_last_contact || g.last_note_date;
+    const mc = g.main_contact;
+    const stage = g.stage ? `<span class="badge stage st-${esc(g.stage)}">${esc(STAGES.find(s => s[0] === g.stage)?.[1] || g.stage)}</span>` : '';
+    const size = g.units ? `${g.units} units` : '';
+    return `<div class="card tap" data-go="${href}">
+      <div class="row"><div class="grow t">${esc(g.owner_name || g.own_summary)}</div>${stage}</div>
+      <div class="s">${joinDot([g.owner_name && g.own_summary !== g.owner_name ? g.own_summary : '', (g.states || []).join('/'), size])}</div>
+      <div class="s ${last ? '' : 'warn'}">${last ? 'Last contact ' + fmtDate(last) : 'Never contacted'}</div>
+      ${g.reason ? `<div class="reason">${esc(g.reason)}</div>` : ''}
+      ${g.last_note ? `<div class="note"><span class="when">Last note · ${fmtDate(g.last_note_date)}</span>${esc(g.last_note.length > 180 ? g.last_note.slice(0, 180) + '…' : g.last_note)}</div>` : ''}
+      ${mc ? `<div class="divider"></div><div class="s">${esc(personName(mc))}${mc.title ? ' · ' + esc(mc.title) : ''}</div>${phonesHTML(mc) || '<div class="s warn">No phone on file</div>'}` : ''}
+      ${g.is_dnc ? '<div style="margin-top:6px"><span class="badge dnc">Do not contact</span></div>' : ''}
+      ${g.group_kind in ACT_KEY ? `<div class="acts">${logBtn(g.group_kind, g.group_id, g.owner_name || g.own_summary)}</div>` : ''}
+      ${hotCardRow(g)}
+    </div>`;
+  });
+  $view.innerHTML = `<div class="chips">${chips}</div>
+    <div class="s" style="margin:-4px 2px 10px">Longest since last contact first</div>
+    ${cards.join('') || '<div class="empty">Nothing in this bucket.</div>'}`;
+  $view.querySelectorAll('.chips button').forEach(b => b.addEventListener('click', () => {
+    hotStage = b.dataset.stage; sessionStorageSet('bsm.stage', hotStage); viewHot();
+  }));
+}
+
+/* ---------- router ---------- */
+// Cards are divs, not links, so the call and email buttons inside them are real
+// links of their own (a link inside a link breaks the page apart).
+document.addEventListener('click', e => {
+  if (e.target.closest('a, button')) return;
+  // A long Hot reason is cut to four lines; tapping it opens the rest in place.
+  const reason = e.target.closest('.reason');
+  if (reason) { reason.classList.toggle('open'); return; }
+  const card = e.target.closest('[data-go]');
+  if (card && card.closest('#results')) rememberSearch(lastQuery);
+  if (card) location.hash = card.dataset.go.replace(/^#/, '');
+});
+
+function route(keepScroll) {
+  const h = location.hash.replace(/^#/, '');
+  const [kind, id] = h.split('/');
+  if (!keepScroll) window.scrollTo(0, 0);
+  if (kind === 'p' && id) return viewProperty(id);
+  if (kind === 'e' && id) return viewEntity(id);
+  if (kind === 'c' && id) return viewContact(id);
+  if (kind === 'hot') return viewHot();
+  if (kind === 'search') return viewSearch();
+  return viewHome();
+}
+// After a save: redraw the same page in place, without jumping back to the top.
+async function refresh() {
+  const y = window.scrollY;
+  await route(true);
+  window.scrollTo(0, y);
+}
+// Back only makes sense once we've navigated inside the app.
+let depth = 0;
+window.addEventListener('hashchange', () => { depth++; route(); });
+const _setHeader = setHeader;
+setHeader = (t, back) => _setHeader(t, back && depth > 0);
+route();
+</script>
+</body>
+</html>

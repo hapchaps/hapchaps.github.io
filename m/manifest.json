@@ -1,0 +1,16 @@
+{
+  "name": "BetaStation",
+  "short_name": "BS",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0f1419",
+  "theme_color": "#0f1419",
+  "icons": [
+    {
+      "src": "m-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
