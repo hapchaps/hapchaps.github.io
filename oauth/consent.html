@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Beta Station sign in</title>
+<style>
+  :root { --bg: #f4f5f7; --card: #ffffff; --ink: #16202c; --muted: #5d6b7a; --line: #d9dee5; --accent: #1f5fae; --danger: #a12b2b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #11161c; --card: #1a212a; --ink: #e8edf2; --muted: #9aa7b5; --line: #2c3743; --accent: #6aa5ee; --danger: #ef8a8a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+         background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 28px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p { margin: 8px 0; }
+  .muted { color: var(--muted); font-size: 14px; }
+  label { display: block; font-size: 14px; margin: 14px 0 4px; }
+  input { width: 100%; padding: 10px 12px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+  button { width: 100%; margin-top: 16px; padding: 11px; font: inherit; font-weight: 600; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+  button.secondary { background: transparent; color: var(--ink); border-color: var(--line); margin-top: 8px; }
+  button:disabled { opacity: 0.6; cursor: default; }
+  dl { margin: 16px 0 0; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 14px; }
+  dt { color: var(--muted); }
+  dd { margin: 0 0 8px; word-break: break-all; }
+  dd:last-child { margin-bottom: 0; }
+  .error { color: var(--danger); font-size: 14px; min-height: 20px; margin-top: 10px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Beta Station</h1>
+
+  <section id="loading"><p class="muted">Loading...</p></section>
+
+  <section id="signin" hidden>
+    <p class="muted">Sign in to continue.</p>
+    <form id="signin-form">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button type="submit" id="signin-button">Sign in</button>
+    </form>
+  </section>
+
+  <section id="consent" hidden>
+    <p>An app is asking to read and write your Beta Station data as you.</p>
+    <dl>
+      <dt>App</dt><dd id="client-name"></dd>
+      <dt>It will send you back to</dt><dd id="redirect-uri"></dd>
+      <dt>Signed in as</dt><dd id="who"></dd>
+    </dl>
+    <p class="muted">Approve only if you just started connecting Claude yourself and the address above is claude.ai, claude.com or localhost.</p>
+    <button id="approve">Approve</button>
+    <button id="deny" class="secondary">Deny</button>
+  </section>
+
+  <section id="done" hidden><p id="done-text" class="muted"></p></section>
+
+  <div class="error" id="error" role="alert"></div>
+</main>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+  // Public by design: this key only identifies the project. Row-level security does the rest.
+  const supabase = createClient(
+    'https://gpgeevlmecgomazqyhdz.supabase.co',
+    'sb_publishable_CjDdEouLDrWLgLI73LO4Sg_Lo5QY9V9',
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }  // nothing is kept in this browser
+  )
+
+  const $ = (id) => document.getElementById(id)
+  const show = (id) => { for (const s of ['loading', 'signin', 'consent', 'done']) $(s).hidden = s !== id }
+  const fail = (message) => { $('error').textContent = message }
+  const authorizationId = new URLSearchParams(location.search).get('authorization_id')
+
+  async function loadConsent() {
+    fail('')
+    const { data, error } = await supabase.auth.oauth.getAuthorizationDetails(authorizationId)
+    if (error || !data) return fail(error?.message || 'This sign-in request is no longer valid. Start again from Claude.')
+    // Already approved for this app before: go straight back.
+    if (!('authorization_id' in data) && data.redirect_url) { location.replace(data.redirect_url); return }
+    const { data: { user } } = await supabase.auth.getUser()
+    $('client-name').textContent = data.client?.name || 'Unnamed app'
+    $('redirect-uri').textContent = data.redirect_uri || ''
+    $('who').textContent = user?.email || ''
+    show('consent')
+  }
+
+  async function decide(approve) {
+    fail('')
+    $('approve').disabled = $('deny').disabled = true
+    const { data, error } = approve
+      ? await supabase.auth.oauth.approveAuthorization(authorizationId)
+      : await supabase.auth.oauth.denyAuthorization(authorizationId)
+    if (error || !data?.redirect_url) {
+      $('approve').disabled = $('deny').disabled = false
+      return fail(error?.message || 'Something went wrong. Start again from Claude.')
+    }
+    $('done-text').textContent = approve ? 'Approved. Sending you back to Claude...' : 'Denied.'
+    show('done')
+    location.replace(data.redirect_url)
+  }
+
+  $('signin-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    fail('')
+    $('signin-button').disabled = true
+    const { error } = await supabase.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value })
+    $('signin-button').disabled = false
+    if (error) return fail(error.message)
+    $('password').value = ''
+    show('loading')
+    await loadConsent()
+  })
+  $('approve').addEventListener('click', () => decide(true))
+  $('deny').addEventListener('click', () => decide(false))
+
+  if (!authorizationId) {
+    $('done-text').textContent = 'Nothing to approve here. This page is used when you connect Claude to Beta Station.'
+    show('done')
+  } else {
+    show('signin')
+  }
+</script>
+</body>
+</html>
