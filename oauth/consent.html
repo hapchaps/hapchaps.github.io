@@ -47,6 +47,15 @@
     </form>
   </section>
 
+  <section id="code" hidden>
+    <p class="muted">Enter the 6-digit code from your authenticator app (it is listed as BetaStation).</p>
+    <form id="code-form">
+      <label for="totp">Code</label>
+      <input id="totp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required>
+      <button type="submit" id="code-button">Continue</button>
+    </form>
+  </section>
+
   <section id="consent" hidden>
     <p>An app is asking to read and write your Beta Station data as you.</p>
     <dl>
@@ -75,9 +84,27 @@
   )
 
   const $ = (id) => document.getElementById(id)
-  const show = (id) => { for (const s of ['loading', 'signin', 'consent', 'done']) $(s).hidden = s !== id }
+  const show = (id) => { for (const s of ['loading', 'signin', 'code', 'consent', 'done']) $(s).hidden = s !== id }
   const fail = (message) => { $('error').textContent = message }
   const authorizationId = new URLSearchParams(location.search).get('authorization_id')
+  let factorId = null
+
+  // The second step: when two-step sign-in is set up on the login, the code is required
+  // before anything is approved, so the token Claude receives carries it (the connector
+  // refuses tokens without it once BS_REQUIRE_MFA is on).
+  async function afterPassword() {
+    const { data: level } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    const { data: factors } = await supabase.auth.mfa.listFactors()
+    const totp = ((factors && factors.totp) || []).find((f) => f.status === 'verified')
+    if (totp && level && level.currentLevel !== 'aal2') {
+      factorId = totp.id
+      show('code')
+      $('totp').focus()
+      return
+    }
+    show('loading')
+    await loadConsent()
+  }
 
   async function loadConsent() {
     fail('')
@@ -115,6 +142,16 @@
     $('signin-button').disabled = false
     if (error) return fail(error.message)
     $('password').value = ''
+    await afterPassword()
+  })
+  $('code-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    fail('')
+    $('code-button').disabled = true
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: $('totp').value.trim() })
+    $('code-button').disabled = false
+    if (error) return fail('That code did not work. Try the next one.')
+    $('totp').value = ''
     show('loading')
     await loadConsent()
   })
