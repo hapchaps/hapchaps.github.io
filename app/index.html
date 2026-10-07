@@ -102,6 +102,11 @@
     headers.set('Authorization', 'Bearer ' + data.session.access_token);
     const r = await plain(API + url, Object.assign({}, init || {}, { headers }));
     if (r.status === 401) { step = 'password'; draw('Please sign in again.'); }
+    // No Outlook to drive from here: the email hand-off comes back as a mailto link, which
+    // opens the mail app with the draft (the bio cannot be attached that way).
+    if (url.indexOf('/api/email/open') === 0 && r.ok) {
+      try { const j = await r.clone().json(); if (j && j.mailto) location.href = j.mailto; } catch (e) {}
+    }
     return r;
   };
 
