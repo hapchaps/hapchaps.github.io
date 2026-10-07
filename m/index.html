@@ -409,7 +409,7 @@ function notesHTML(acts, limit = 5) {
   if (!acts || !acts.length) return '';
   const rows = acts.slice(0, limit).map(a => {
     const who = [a.contact_name, a.property_name].filter(Boolean).join(' · ');
-    const type = a.activity_type ? a.activity_type[0].toUpperCase() + a.activity_type.slice(1) : 'Note';
+    const type = a.activity_type ? (a.activity_type[0].toUpperCase() + a.activity_type.slice(1)).replace(/_/g, ' ') : 'Note';
     return `<div class="note"><span class="when">${esc(type)} · ${fmtDate(a.occurred_at || a.created_at)}${who ? ' · ' + esc(who) : ''}</span>${esc(a.body || a.summary || '')}</div>`;
   });
   return `<h2>Call log</h2><div class="card">${rows.join('')}</div>`;
