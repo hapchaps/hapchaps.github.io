@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Prepared for you | The Knapp Stahler Group</title>
+<!--
+  The owner pitch page. A static file: it holds no data and no secret. The link's token (?k=)
+  is sent to the bs-pitch function, which answers only what the owner may see. Styling follows
+  the house brand: navy headings, gold highlight, light blue callouts, Arial.
+-->
+<style>
+  :root { --navy: #1F3864; --gold: #FFE699; --gold2: #FFF2CC; --blue: #D9E1F2; --grey: #F2F2F2; --text: #333; --muted: #595959; --cap: #404040; --red: #C00000; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; color: var(--text); font: 16px/1.5 Arial, Helvetica, sans-serif; }
+  .band { background: var(--navy); color: #fff; padding: 28px 16px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 16px; }
+  .band .firm { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+  .band h1 { font-size: 30px; line-height: 1.2; margin: 10px 0 6px; font-weight: 700; }
+  .band .for { font-size: 17px; opacity: .95; }
+  .band .meta { font-size: 13px; opacity: .8; margin-top: 10px; }
+  h2 { color: var(--navy); font-size: 22px; margin: 40px 0 10px; padding-bottom: 6px; border-bottom: 3px solid var(--gold); }
+  h3 { color: var(--navy); font-size: 17px; margin: 22px 0 6px; }
+  p { margin: 8px 0; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .intro { background: var(--gold2); border-left: 6px solid var(--gold); padding: 14px 16px; margin: 24px 0 0; font-size: 17px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 12px; }
+  .card { background: var(--blue); border-radius: 6px; padding: 14px 16px; }
+  .card .name { color: var(--navy); font-weight: 700; font-size: 17px; }
+  .card .addr { color: var(--cap); font-size: 14px; }
+  .card .facts { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+  .card .facts b { color: var(--navy); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th { background: var(--navy); color: #fff; text-align: left; padding: 8px 10px; font-weight: 600; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e3e3e3; }
+  tr:nth-child(even) td { background: var(--grey); }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 14px 0; }
+  .kpi { background: var(--gold2); border-top: 4px solid var(--gold); padding: 12px 14px; }
+  .kpi .v { font-size: 26px; font-weight: 700; color: var(--navy); }
+  .kpi .l { font-size: 13px; color: var(--cap); }
+  .chart { width: 100%; height: auto; margin: 8px 0 4px; }
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 10px 0; }
+  .steps li { position: relative; padding: 8px 0 8px 52px; margin: 0 0 6px; }
+  .steps li::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: 6px; width: 36px; height: 36px; border-radius: 50%; background: var(--navy); color: #fff; font-weight: 700; display: grid; place-items: center; }
+  .steps b { color: var(--navy); display: block; }
+  ol.q, ul.chk { padding-left: 22px; }
+  ol.q li, ul.chk li { margin: 6px 0; }
+  .ours { background: var(--gold2); font-weight: 600; }
+  .callout { background: var(--blue); padding: 16px 18px; border-radius: 6px; margin: 16px 0; }
+  .contact { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; background: var(--navy); color: #fff; padding: 22px 18px; border-radius: 6px; margin: 34px 0 18px; }
+  .contact a { color: #fff; }
+  .contact .n { font-size: 20px; font-weight: 700; }
+  .contact .t { opacity: .9; }
+  .contact .lines { margin-top: 8px; font-size: 15px; line-height: 1.7; }
+  footer { color: var(--muted); font-size: 12.5px; padding: 10px 0 40px; border-top: 1px solid #ddd; margin-top: 10px; }
+  .notice { max-width: 640px; margin: 80px auto; padding: 0 16px; text-align: center; color: var(--muted); }
+  .notice h1 { color: var(--navy); font-size: 24px; }
+  .caution { font-size: 13px; color: var(--cap); background: var(--grey); padding: 10px 12px; border-radius: 4px; }
+  @media (max-width: 640px) { .band h1 { font-size: 24px; } .contact { grid-template-columns: 1fr; } }
+  @media print { .band { -webkit-print-color-adjust: exact; print-color-adjust: exact; } h2 { page-break-after: avoid; } .card, table { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div id="app"><div class="notice"><p>Loading your page.</p></div></div>
+<script>
+(function () {
+  const API = 'https://gpgeevlmecgomazqyhdz.supabase.co/functions/v1/bs-pitch';
+  const k = new URLSearchParams(location.search).get('k') || '';
+  const app = document.getElementById('app');
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const money = (n) => n == null ? '' : '$' + Math.round(Number(n)).toLocaleString('en-US');
+  const num = (n) => n == null ? '' : Number(n).toLocaleString('en-US');
+  const per = (basis) => basis === 'bed' ? 'per bed' : 'per unit';
+
+  function notice(title, body) {
+    app.innerHTML = '<div class="notice"><h1>' + esc(title) + '</h1><p>' + esc(body) + '</p>' +
+      '<p class="muted">The Knapp Stahler Group at Marcus &amp; Millichap</p></div>';
+  }
+
+  function facts(p) {
+    const f = [];
+    if (p.units) f.push('<span><b>' + num(p.units) + '</b> units</span>');
+    if (p.beds && (!p.units || p.asset_class === 'SNF')) f.push('<span><b>' + num(p.beds) + '</b> beds</span>');
+    if (p.licensed_capacity) f.push('<span><b>' + num(p.licensed_capacity) + '</b> licensed</span>');
+    if (p.year_built) f.push('<span>built <b>' + esc(p.year_built) + '</b>' + (p.year_renovated ? ', renovated ' + esc(p.year_renovated) : '') + '</span>');
+    return f.join('');
+  }
+
+  function barChart(rows, basis) {
+    // one bar per year: median price, labeled directly (navy), no legend
+    const data = (rows || []).filter((r) => r.median != null);
+    if (data.length < 2) return '';
+    const W = 640, H = 220, L = 70, B = 36, T = 22, R = 16;
+    const max = Math.max.apply(null, data.map((r) => Number(r.median))) * 1.15;
+    const bw = (W - L - R) / data.length;
+    let s = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Median price ' + per(basis) + ' by year">';
+    for (let i = 0; i <= 3; i++) {
+      const y = T + (H - T - B) * i / 3, v = max * (1 - i / 3);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="#e3e3e3"/>' +
+           '<text x="' + (L - 8) + '" y="' + (y + 4) + '" font-size="11" fill="#595959" text-anchor="end">' + money(v / 1000) + 'K</text>';
+    }
+    data.forEach((r, i) => {
+      const h = (H - T - B) * Number(r.median) / max, x = L + i * bw + bw * 0.18, y = H - B - h;
+      s += '<rect x="' + x + '" y="' + y + '" width="' + (bw * 0.64) + '" height="' + h + '" fill="#1F3864"/>' +
+           '<text x="' + (x + bw * 0.32) + '" y="' + (y - 6) + '" font-size="12" fill="#1F3864" text-anchor="middle" font-weight="700">' + money(r.median / 1000) + 'K</text>' +
+           '<text x="' + (x + bw * 0.32) + '" y="' + (H - B + 16) + '" font-size="12" fill="#404040" text-anchor="middle">' + esc(r.year) + '</text>' +
+           '<text x="' + (x + bw * 0.32) + '" y="' + (H - B + 30) + '" font-size="11" fill="#595959" text-anchor="middle">' + r.count + ' sale' + (r.count == 1 ? '' : 's') + '</text>';
+    });
+    return s + '</svg>';
+  }
+
+  function market(m, label) {
+    if (!m || !m.count) {
+      return '<h3>' + esc(label) + '</h3><p class="muted">Too few graded sales within ' + esc(m ? m.radius_miles : '') + ' miles in the last ' + esc(m ? m.years : '') + ' years to show a band. We can widen the search for you.</p>';
+    }
+    const unit = per(m.basis);
+    let h = '<h3>' + esc(label) + '</h3>' +
+      '<p class="muted">' + m.count + ' graded sale' + (m.count == 1 ? '' : 's') + ' within ' + esc(m.radius_miles) + ' miles, last ' + esc(m.years) + ' years. Price ' + unit + '.</p>' +
+      '<div class="kpis">' +
+      '<div class="kpi"><div class="v">' + money(m.median) + '</div><div class="l">median ' + unit + '</div></div>' +
+      '<div class="kpi"><div class="v">' + money(m.low) + '</div><div class="l">lower quarter</div></div>' +
+      '<div class="kpi"><div class="v">' + money(m.high) + '</div><div class="l">upper quarter</div></div>' +
+      '</div>' + barChart(m.by_year, m.basis);
+    if (m.sales && m.sales.length) {
+      h += '<table><thead><tr><th>Closed</th><th>Where</th><th>Type</th><th class="num">Units</th><th class="num">Built</th><th class="num">Price ' + unit + '</th><th class="num">Miles</th></tr></thead><tbody>';
+      m.sales.forEach((s) => {
+        h += '<tr' + (s.ours ? ' class="ours"' : '') + '><td>' + esc(s.quarter) + '</td><td>' + esc(s.city) + ', ' + esc(s.state) + (s.ours ? ' (' + esc(s.ours) + ', our sale)' : '') + '</td><td>' + esc(s.type) + '</td>' +
+             '<td class="num">' + num(s.units) + '</td><td class="num">' + esc(s.year_built || '') + '</td><td class="num">' + money(s.price_per) + '</td><td class="num">' + esc(s.miles) + '</td></tr>';
+      });
+      h += '</tbody></table>';
+    }
+    if (m.caution) h += '<p class="caution">' + esc(m.caution) + '</p>';
+    return h;
+  }
+
+  function render(d) {
+    const hide = new Set(d.hide || []);
+    const props = d.properties || [];
+    const states = Array.from(new Set(props.map((p) => p.state))).join(', ');
+    let h = '<div class="band"><div class="wrap"><div class="firm">Marcus &amp; Millichap &nbsp;|&nbsp; The Knapp Stahler Group</div>' +
+      '<h1>' + esc(d.title) + '</h1><div class="for">Prepared for ' + esc(d.prepared_for) + '</div>' +
+      '<div class="meta">' + esc(d.prepared_on) + (states ? ' &nbsp;|&nbsp; ' + esc(states) : '') + '</div></div></div><div class="wrap">';
+    if (d.intro) h += '<div class="intro">' + esc(d.intro).replace(/\n/g, '<br>') + '</div>';
+
+    h += '<section data-section="properties"><h2>Your propert' + (props.length === 1 ? 'y' : 'ies') + '</h2>' +
+      '<p class="muted">As the public record shows ' + (props.length === 1 ? 'it' : 'them') + '. Tell us what is out of date.</p><div class="cards">';
+    props.forEach((p) => {
+      h += '<div class="card"><div class="name">' + esc(p.name) + '</div><div class="addr">' + esc([p.address, p.city, p.state, p.zip].filter(Boolean).join(', ')) + '</div>' +
+           '<div class="muted">' + esc(p.type) + '</div><div class="facts">' + facts(p) + '</div></div>';
+    });
+    h += '</div></section>';
+
+    if (!hide.has('market') && d.market && (d.market.seniors_housing || d.market.skilled_nursing)) {
+      h += '<section data-section="market"><h2>What has traded nearby</h2>';
+      if (d.market.seniors_housing) h += market(d.market.seniors_housing, 'Seniors housing (assisted living, memory care, independent living)');
+      if (d.market.skilled_nursing) h += market(d.market.skilled_nursing, 'Skilled nursing');
+      h += '</section>';
+    }
+
+    const s = d.supply;
+    if (!hide.has('supply') && s) {
+      h += '<section data-section="supply"><h2>What is being built nearby</h2>';
+      if (!s.projects) {
+        h += '<p>No competing senior housing construction on file within ' + esc(s.radius_miles) + ' miles. That is good news for an owner.</p>';
+      } else {
+        h += '<p>' + s.projects + ' project' + (s.projects == 1 ? '' : 's') + ' within ' + esc(s.radius_miles) + ' miles, ' + num(s.units) + ' units in all.</p>' +
+          '<table><thead><tr><th>Where</th><th>Stage</th><th>Type</th><th class="num">Units</th><th>Target completion</th><th class="num">Miles</th></tr></thead><tbody>';
+        (s.list || []).forEach((r) => {
+          h += '<tr><td>' + esc(r.city) + ', ' + esc(r.state) + '</td><td>' + esc(r.stage) + '</td><td>' + esc(r.type || '') + '</td><td class="num">' + num(r.units) + '</td><td>' + esc(r.target_completion || '') + '</td><td class="num">' + esc(r.miles) + '</td></tr>';
+        });
+        h += '</tbody></table><p class="caution">Pipeline stages move; a project in planning may never break ground. We track these monthly.</p>';
+      }
+      h += '</section>';
+    }
+
+    if (!hide.has('closings') && d.closings && d.closings.length) {
+      h += '<section data-section="closings"><h2>Recent closings by our team</h2><table><thead><tr><th>Property</th><th>Where</th><th>Closed</th><th>Type</th><th class="num">Units</th><th class="num">Price</th><th class="num">Per unit or bed</th></tr></thead><tbody>';
+      d.closings.forEach((c) => {
+        h += '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.city) + ', ' + esc(c.state) + '</td><td>' + esc(c.quarter) + '</td><td>' + esc(c.type) + '</td><td class="num">' + num(c.units) + '</td><td class="num">' + money(c.price) + '</td><td class="num">' + money(c.price_per_unit || c.price_per_bed) + '</td></tr>';
+      });
+      h += '</tbody></table></section>';
+    }
+
+    if (!hide.has('process') && d.process) {
+      h += '<section data-section="process"><h2>How we would run it</h2><div class="callout">The Knapp Stahler Group brings qualified Buyers to the table and runs the deal start to finish, on your timeline and under confidentiality.</div><ol class="steps">';
+      d.process.forEach((st) => { h += '<li><b>' + esc(st.step) + '</b>' + esc(st.detail) + '</li>'; });
+      h += '</ol></section>';
+    }
+
+    if (!hide.has('questions') && d.questions) {
+      h += '<section data-section="questions"><h2>Questions for you</h2><p class="muted">The answers shape the value and the plan. Nothing here is shared.</p><ol class="q">';
+      d.questions.forEach((q) => { h += '<li>' + esc(q) + '</li>'; });
+      h += '</ol></section>';
+    }
+
+    if (!hide.has('checklist') && d.checklist) {
+      h += '<section data-section="checklist"><h2>For a full broker opinion of value</h2><p class="muted">Six items, under a confidentiality agreement:</p><ul class="chk">';
+      d.checklist.forEach((c) => { h += '<li>' + esc(c) + '</li>'; });
+      h += '</ul></section>';
+    }
+
+    const a = d.advisor || {};
+    h += '<section data-section="contact"><div class="contact"><div><div class="n">' + esc(a.name) + '</div><div class="t">' + esc(a.title) + ' &nbsp;|&nbsp; ' + esc(a.firm) + ' &nbsp;|&nbsp; ' + esc(a.team) + '</div>' +
+      '<div class="lines">Cell: <a href="tel:' + esc((a.cell || '').replace(/\D/g, '')) + '">' + esc(a.cell) + '</a><br>Direct: <a href="tel:' + esc((a.direct || '').replace(/\D/g, '')) + '">' + esc(a.direct) + '</a><br>' +
+      '<a href="mailto:' + esc(a.email) + '">' + esc(a.email) + '</a><br>' + esc(a.office) + '</div></div></div></section>';
+    h += '<footer>' + esc(d.footer) + ' This page is active until ' + esc(d.expires_on) + '.</footer></div>';
+    app.innerHTML = h;
+    document.title = esc(d.title) + ' | The Knapp Stahler Group';
+    track();
+  }
+
+  // Which sections were read, and how long the page was open. Nothing about the reader is kept
+  // beyond a hash of the browser and the day.
+  function track() {
+    const seen = new Set();
+    const send = (body, beacon) => {
+      const payload = JSON.stringify(Object.assign({ k: k }, body));
+      if (beacon && navigator.sendBeacon) return navigator.sendBeacon(API + '/view', new Blob([payload], { type: 'application/json' }));
+      fetch(API + '/view', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
+    };
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          const name = e.target.getAttribute('data-section');
+          if (e.isIntersecting && !seen.has(name)) { seen.add(name); send({ event: 'section', section: name }); }
+        });
+      }, { threshold: 0.4 });
+      document.querySelectorAll('section[data-section]').forEach((el) => io.observe(el));
+    }
+    const t0 = Date.now();
+    let left = false;
+    const leave = () => { if (left) return; left = true; send({ event: 'leave', seconds: Math.round((Date.now() - t0) / 1000) }, true); };
+    window.addEventListener('pagehide', leave);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') leave(); });
+  }
+
+  if (!k) return notice('This link is incomplete', 'Please use the full link you were sent, or ask Hap Knowles for a new one.');
+  fetch(API + '/page?k=' + encodeURIComponent(k)).then(async (r) => {
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 429) return notice('One moment', 'Too many requests. Please try again in a minute.');
+    if (!r.ok || d.status !== 'ok') {
+      const why = d.status === 'expired' ? 'This link has expired.' : d.status === 'revoked' ? 'This link is no longer active.' : 'This link is not active.';
+      return notice(why, 'Ask Hap Knowles for a current one: (858) 922-5021 or Hap.Knowles@mmreis.com.');
+    }
+    render(d);
+  }).catch(() => notice('Could not load the page', 'Check your connection and try again, or call Hap Knowles at (858) 922-5021.'));
+})();
+</script>
+</body>
+</html>
