@@ -11,55 +11,129 @@
   the house brand: navy headings, gold highlight, light blue callouts, Arial.
 -->
 <style>
-  :root { --navy: #1F3864; --gold: #FFE699; --gold2: #FFF2CC; --blue: #D9E1F2; --grey: #F2F2F2; --text: #333; --muted: #595959; --cap: #404040; --red: #C00000; }
+  :root { --navy: #1F3864; --navy2: #2B4A82; --gold: #FFE699; --gold2: #FFF2CC; --goldd: #C9A227; --blue: #D9E1F2; --blue2: #EEF2FA; --grey: #F2F2F2; --text: #2b2b2b; --muted: #595959; --cap: #404040; --red: #C00000; --line: #dfe4ee; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: #fff; color: var(--text); font: 16px/1.5 Arial, Helvetica, sans-serif; }
-  .band { background: var(--navy); color: #fff; padding: 28px 16px; }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 0 16px; }
-  .band .firm { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
-  .band h1 { font-size: 30px; line-height: 1.2; margin: 10px 0 6px; font-weight: 700; }
-  .band .for { font-size: 17px; opacity: .95; }
-  .band .meta { font-size: 13px; opacity: .8; margin-top: 10px; }
-  h2 { color: var(--navy); font-size: 22px; margin: 40px 0 10px; padding-bottom: 6px; border-bottom: 3px solid var(--gold); }
-  h3 { color: var(--navy); font-size: 17px; margin: 22px 0 6px; }
+  html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+  html, body { margin: 0; background: #f6f8fc; color: var(--text); font: 16px/1.55 Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+
+  /* masthead */
+  .band { background: linear-gradient(135deg, #16294d 0%, var(--navy) 55%, var(--navy2) 100%); color: #fff; padding: 34px 0 78px; border-bottom: 5px solid var(--gold); }
+  .band .firm { font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; opacity: .85; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .band .firm i { width: 5px; height: 5px; background: var(--gold); transform: rotate(45deg); display: inline-block; }
+  .band .eyebrow { margin-top: 30px; color: var(--gold); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+  .band h1 { font-size: 38px; line-height: 1.15; margin: 8px 0 10px; font-weight: 700; letter-spacing: -.01em; max-width: 780px; }
+  .band .for { font-size: 18px; opacity: .95; }
+  .band .meta { font-size: 13.5px; opacity: .75; margin-top: 8px; }
+
+  /* at a glance */
+  .glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: -48px 0 0; position: relative; }
+  .g { background: #fff; border-radius: 8px; padding: 16px 18px; box-shadow: 0 6px 22px rgba(31,56,100,.14); border-top: 4px solid var(--gold); }
+  .g .v { font-size: 28px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+  .g .l { font-size: 13px; color: var(--cap); margin-top: 4px; }
+
+  /* section nav */
+  nav.sn { position: sticky; top: 0; z-index: 10; background: rgba(246,248,252,.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); margin-top: 26px; }
+  nav.sn .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  nav.sn a { color: var(--navy); text-decoration: none; font-size: 13.5px; font-weight: 700; padding: 14px 12px; white-space: nowrap; border-bottom: 3px solid transparent; }
+  nav.sn a:hover, nav.sn a.on { border-bottom-color: var(--goldd); }
+  nav.sn .pr { margin-left: auto; background: none; border: 1px solid var(--line); color: var(--navy); border-radius: 6px; font: 700 12.5px Arial; padding: 6px 12px; margin-top: 8px; margin-bottom: 8px; cursor: pointer; white-space: nowrap; }
+  nav.sn .pr:hover { background: #fff; }
+
+  section { padding-top: 6px; }
+  h2 { color: var(--navy); font-size: 25px; margin: 46px 0 6px; letter-spacing: -.005em; }
+  h2::after { content: ""; display: block; width: 56px; height: 4px; background: var(--gold); margin-top: 8px; border-radius: 2px; }
+  h3 { color: var(--navy); font-size: 18px; margin: 28px 0 4px; }
   p { margin: 8px 0; }
-  .muted { color: var(--muted); font-size: 14px; }
-  .intro { background: var(--gold2); border-left: 6px solid var(--gold); padding: 14px 16px; margin: 24px 0 0; font-size: 17px; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 12px; }
-  .card { background: var(--blue); border-radius: 6px; padding: 14px 16px; }
-  .card .name { color: var(--navy); font-weight: 700; font-size: 17px; }
-  .card .addr { color: var(--cap); font-size: 14px; }
-  .card .facts { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
-  .card .facts b { color: var(--navy); }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
-  th { background: var(--navy); color: #fff; text-align: left; padding: 8px 10px; font-weight: 600; }
-  td { padding: 7px 10px; border-bottom: 1px solid #e3e3e3; }
-  tr:nth-child(even) td { background: var(--grey); }
+  .muted { color: var(--muted); font-size: 14.5px; }
+  .lede { color: var(--cap); font-size: 16.5px; max-width: 760px; margin: 10px 0 4px; }
+  .intro { background: #fff; border-left: 6px solid var(--gold); padding: 18px 22px; margin: 30px 0 0; font-size: 17px; border-radius: 0 8px 8px 0; box-shadow: 0 2px 10px rgba(31,56,100,.07); }
+
+  /* property cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; margin-top: 16px; }
+  .card { background: #fff; border-radius: 8px; padding: 18px 20px; box-shadow: 0 2px 12px rgba(31,56,100,.09); border-left: 5px solid var(--navy); }
+  .chip { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: var(--blue); color: var(--navy); padding: 3px 9px; border-radius: 20px; }
+  .card .name { color: var(--navy); font-weight: 700; font-size: 19px; margin-top: 10px; }
+  .card .addr { color: var(--muted); font-size: 14px; }
+  .card .facts { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .card .facts .f b { display: block; font-size: 20px; color: var(--navy); line-height: 1.1; }
+  .card .facts .f span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+
+  /* tables */
+  .tw { overflow-x: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(31,56,100,.08); margin: 14px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--navy); color: #fff; text-align: left; padding: 10px 12px; font-weight: 600; white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid #edf0f6; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:nth-child(even) td { background: #f8f9fc; }
   td.num, th.num { text-align: right; white-space: nowrap; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 14px 0; }
-  .kpi { background: var(--gold2); border-top: 4px solid var(--gold); padding: 12px 14px; }
-  .kpi .v { font-size: 26px; font-weight: 700; color: var(--navy); }
-  .kpi .l { font-size: 13px; color: var(--cap); }
-  .chart { width: 100%; height: auto; margin: 8px 0 4px; }
-  .steps { counter-reset: s; list-style: none; padding: 0; margin: 10px 0; }
-  .steps li { position: relative; padding: 8px 0 8px 52px; margin: 0 0 6px; }
-  .steps li::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: 6px; width: 36px; height: 36px; border-radius: 50%; background: var(--navy); color: #fff; font-weight: 700; display: grid; place-items: center; }
-  .steps b { color: var(--navy); display: block; }
-  ol.q, ul.chk { padding-left: 22px; }
-  ol.q li, ul.chk li { margin: 6px 0; }
-  .ours { background: var(--gold2); font-weight: 600; }
-  .callout { background: var(--blue); padding: 16px 18px; border-radius: 6px; margin: 16px 0; }
-  .contact { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; background: var(--navy); color: #fff; padding: 22px 18px; border-radius: 6px; margin: 34px 0 18px; }
+  .ours td { background: var(--gold2) !important; font-weight: 700; }
+  .dot { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--navy); color: #fff; font-size: 11.5px; font-weight: 700; }
+  .ours .dot { background: var(--goldd); }
+
+  /* market */
+  .band-note { display: grid; gap: 14px; margin: 14px 0 6px; }
+  .big { background: var(--navy); color: #fff; border-radius: 8px; padding: 20px 24px; display: grid; grid-template-columns: auto 1fr; gap: 10px 36px; align-items: center; }
+  .big .v { font-size: 42px; font-weight: 700; line-height: 1.05; }
+  .big .l { font-size: 13.5px; opacity: .85; margin-top: 4px; }
+  .big .rng { font-size: 15.5px; border-left: 1px solid rgba(255,255,255,.3); padding-left: 32px; }
+  .big .rng b { color: var(--gold); }
+  .plot { background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(31,56,100,.08); padding: 8px 10px 4px; }
+  .chart { width: 100%; height: auto; display: block; }
+  .legend { font-size: 12.5px; color: var(--muted); padding: 0 8px 8px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-right: 5px; border-radius: 2px; }
+  .caution { font-size: 13px; color: var(--cap); background: #fff; border-left: 4px solid var(--blue); padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 10px 0; }
+
+  /* supply */
+  .stages { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 4px; }
+  .stage { background: #fff; border-radius: 8px; padding: 10px 16px; box-shadow: 0 2px 10px rgba(31,56,100,.08); border-top: 3px solid var(--blue); min-width: 130px; }
+  .stage b { display: block; font-size: 20px; color: var(--navy); }
+  .stage span { font-size: 12.5px; color: var(--muted); }
+  .good { background: #fff; border-left: 6px solid var(--gold); padding: 16px 20px; border-radius: 0 8px 8px 0; box-shadow: 0 2px 10px rgba(31,56,100,.07); margin: 14px 0; }
+
+  /* process */
+  .steps { list-style: none; padding: 0; margin: 18px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; counter-reset: s; }
+  .steps li { background: #fff; border-radius: 8px; padding: 16px 18px 16px 62px; position: relative; box-shadow: 0 2px 10px rgba(31,56,100,.08); counter-increment: s; }
+  .steps li::before { content: counter(s); position: absolute; left: 16px; top: 15px; width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: var(--gold); font-weight: 700; display: grid; place-items: center; font-size: 16px; }
+  .steps b { color: var(--navy); display: block; margin-bottom: 3px; }
+  .steps span { font-size: 14.5px; color: var(--cap); }
+  .callout { background: var(--blue2); border-left: 6px solid var(--navy); padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 16.5px; }
+
+  /* questions and checklist */
+  .qs { counter-reset: q; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin: 14px 0; padding: 0; list-style: none; }
+  .qs li { background: #fff; border-radius: 8px; padding: 12px 16px 12px 48px; position: relative; font-size: 15px; box-shadow: 0 1px 6px rgba(31,56,100,.07); counter-increment: q; }
+  .qs li::before { content: counter(q); position: absolute; left: 14px; top: 11px; width: 24px; height: 24px; border-radius: 50%; background: var(--blue); color: var(--navy); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+  .chk { list-style: none; padding: 0; margin: 14px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+  .chk li { background: #fff; border-radius: 8px; padding: 12px 16px 12px 46px; position: relative; font-size: 15px; box-shadow: 0 1px 6px rgba(31,56,100,.07); }
+  .chk li::before { content: ""; position: absolute; left: 16px; top: 15px; width: 14px; height: 8px; border-left: 3px solid var(--goldd); border-bottom: 3px solid var(--goldd); transform: rotate(-45deg); }
+
+  /* contact */
+  .contact { background: linear-gradient(135deg, #16294d, var(--navy)); color: #fff; padding: 28px 28px; border-radius: 10px; margin: 46px 0 18px; border-bottom: 5px solid var(--gold); }
+  .contact .ask { color: var(--gold); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+  .contact .n { font-size: 26px; font-weight: 700; margin-top: 6px; }
+  .contact .t { opacity: .9; margin-top: 2px; }
+  .contact .btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .contact .btn { background: var(--gold); color: var(--navy); text-decoration: none; font-weight: 700; padding: 11px 20px; border-radius: 6px; font-size: 15px; }
+  .contact .btn.o { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.55); }
+  .contact .lines { margin-top: 16px; font-size: 14.5px; line-height: 1.7; opacity: .9; }
   .contact a { color: #fff; }
-  .contact .n { font-size: 20px; font-weight: 700; }
-  .contact .t { opacity: .9; }
-  .contact .lines { margin-top: 8px; font-size: 15px; line-height: 1.7; }
-  footer { color: var(--muted); font-size: 12.5px; padding: 10px 0 40px; border-top: 1px solid #ddd; margin-top: 10px; }
+  .contact .btn { color: var(--navy); } .contact .btn.o { color: #fff; }
+  footer { color: var(--muted); font-size: 12.5px; padding: 14px 0 50px; border-top: 1px solid var(--line); margin-top: 10px; }
   .notice { max-width: 640px; margin: 80px auto; padding: 0 16px; text-align: center; color: var(--muted); }
   .notice h1 { color: var(--navy); font-size: 24px; }
-  .caution { font-size: 13px; color: var(--cap); background: var(--grey); padding: 10px 12px; border-radius: 4px; }
-  @media (max-width: 640px) { .band h1 { font-size: 24px; } .contact { grid-template-columns: 1fr; } }
-  @media print { .band { -webkit-print-color-adjust: exact; print-color-adjust: exact; } h2 { page-break-after: avoid; } .card, table { page-break-inside: avoid; } }
+
+  @media (max-width: 720px) {
+    .big { grid-template-columns: 1fr; } .big .rng { border-left: 0; padding-left: 0; border-top: 1px solid rgba(255,255,255,.3); padding-top: 12px; }
+    .band { padding-bottom: 70px; } .band h1 { font-size: 28px; }
+    .band-note { grid-template-columns: 1fr; } .big .v { font-size: 34px; }
+    h2 { font-size: 22px; } .wrap { padding: 0 16px; }
+    .contact { padding: 22px 20px; } nav.sn .pr { display: none; }
+  }
+  @media print {
+    html, body { background: #fff; } nav.sn { display: none; }
+    .band, .big, .contact, th, .steps li::before, .g { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; } .card, .tw, .g, .steps li, .big, .plot, .contact { page-break-inside: avoid; box-shadow: none; border: 1px solid var(--line); }
+  }
 </style>
 </head>
 <body>
@@ -71,8 +145,11 @@
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const money = (n) => n == null ? '' : '$' + Math.round(Number(n)).toLocaleString('en-US');
+  const moneyK = (n) => n == null ? '' : '$' + Math.round(Number(n) / 1000).toLocaleString('en-US') + 'K';
   const num = (n) => n == null ? '' : Number(n).toLocaleString('en-US');
   const per = (basis) => basis === 'bed' ? 'per bed' : 'per unit';
+  const mon = (iso) => { const m = /^(\d{4})-(\d{2})/.exec(iso || ''); return m ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2] - 1] + ' ' + m[1] : (iso || ''); };
+  const plural = (n, w) => n + ' ' + w + (n == 1 ? '' : 's');
 
   function notice(title, body) {
     app.innerHTML = '<div class="notice"><h1>' + esc(title) + '</h1><p>' + esc(body) + '</p>' +
@@ -81,55 +158,71 @@
 
   function facts(p) {
     const f = [];
-    if (p.units) f.push('<span><b>' + num(p.units) + '</b> units</span>');
-    if (p.beds && (!p.units || p.asset_class === 'SNF')) f.push('<span><b>' + num(p.beds) + '</b> beds</span>');
-    if (p.licensed_capacity) f.push('<span><b>' + num(p.licensed_capacity) + '</b> licensed</span>');
-    if (p.year_built) f.push('<span>built <b>' + esc(p.year_built) + '</b>' + (p.year_renovated ? ', renovated ' + esc(p.year_renovated) : '') + '</span>');
+    const add = (v, l) => f.push('<div class="f"><b>' + v + '</b><span>' + l + '</span></div>');
+    if (p.units) add(num(p.units), 'units');
+    if (p.beds && (!p.units || p.asset_class === 'SNF')) add(num(p.beds), 'beds');
+    if (p.licensed_capacity) add(num(p.licensed_capacity), 'licensed');
+    if (p.year_built) add(esc(p.year_built), 'built');
+    if (p.year_renovated) add(esc(p.year_renovated), 'renovated');
     return f.join('');
   }
 
-  function barChart(rows, basis) {
-    // one bar per year: median price, labeled directly (navy), no legend
-    const data = (rows || []).filter((r) => r.median != null);
-    if (data.length < 2) return '';
-    const W = 640, H = 220, L = 70, B = 36, T = 22, R = 16;
-    const max = Math.max.apply(null, data.map((r) => Number(r.median))) * 1.15;
-    const bw = (W - L - R) / data.length;
-    let s = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Median price ' + per(basis) + ' by year">';
-    for (let i = 0; i <= 3; i++) {
-      const y = T + (H - T - B) * i / 3, v = max * (1 - i / 3);
-      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="#e3e3e3"/>' +
-           '<text x="' + (L - 8) + '" y="' + (y + 4) + '" font-size="11" fill="#595959" text-anchor="end">' + money(v / 1000) + 'K</text>';
+  // One dot per sale: price across, distance up. The shaded band is the middle half of sales,
+  // the navy line is the median. Dots are numbered to match the table; our own sales are gold.
+  function dotPlot(m) {
+    const sales = (m.sales || []).filter((s) => s.price_per != null);
+    if (sales.length < 3) return '';
+    const W = 900, H = 260, L = 46, R = 24, T = 18, B = 46;
+    const prices = sales.map((s) => Number(s.price_per)).concat([Number(m.low), Number(m.high), Number(m.median)]);
+    const lo = Math.min.apply(null, prices) * 0.85, hi = Math.max.apply(null, prices) * 1.08;
+    const maxMi = Math.max(m.radius_miles || 15, Math.max.apply(null, sales.map((s) => Number(s.miles) || 0)));
+    const x = (v) => L + (W - L - R) * (v - lo) / (hi - lo);
+    const y = (mi) => T + (H - T - B) * (mi / maxMi);
+    let s = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Sales ' + per(m.basis) + ' against distance from your property">';
+    // IQR band
+    s += '<rect x="' + x(m.low) + '" y="' + T + '" width="' + (x(m.high) - x(m.low)) + '" height="' + (H - T - B) + '" fill="#FFF2CC"/>';
+    // horizontal grid (miles)
+    const stepMi = maxMi > 12 ? 5 : 3;
+    for (let mi = 0; mi <= maxMi + 0.01; mi += stepMi) {
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(mi) + '" y2="' + y(mi) + '" stroke="#e3e7f0"/>' +
+           '<text x="' + (L - 8) + '" y="' + (y(mi) + 4) + '" font-size="11" fill="#595959" text-anchor="end">' + mi + ' mi</text>';
     }
-    data.forEach((r, i) => {
-      const h = (H - T - B) * Number(r.median) / max, x = L + i * bw + bw * 0.18, y = H - B - h;
-      s += '<rect x="' + x + '" y="' + y + '" width="' + (bw * 0.64) + '" height="' + h + '" fill="#1F3864"/>' +
-           '<text x="' + (x + bw * 0.32) + '" y="' + (y - 6) + '" font-size="12" fill="#1F3864" text-anchor="middle" font-weight="700">' + money(r.median / 1000) + 'K</text>' +
-           '<text x="' + (x + bw * 0.32) + '" y="' + (H - B + 16) + '" font-size="12" fill="#404040" text-anchor="middle">' + esc(r.year) + '</text>' +
-           '<text x="' + (x + bw * 0.32) + '" y="' + (H - B + 30) + '" font-size="11" fill="#595959" text-anchor="middle">' + r.count + ' sale' + (r.count == 1 ? '' : 's') + '</text>';
+    // x ticks
+    const tickN = 4;
+    for (let i = 0; i <= tickN; i++) {
+      const v = lo + (hi - lo) * i / tickN;
+      s += '<text x="' + x(v) + '" y="' + (H - B + 18) + '" font-size="11" fill="#595959" text-anchor="middle">' + moneyK(v) + '</text>';
+    }
+    s += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 6) + '" font-size="11.5" fill="#404040" text-anchor="middle">Price ' + per(m.basis) + '</text>';
+    // median
+    s += '<line x1="' + x(m.median) + '" x2="' + x(m.median) + '" y1="' + T + '" y2="' + (H - B) + '" stroke="#1F3864" stroke-width="2.5" stroke-dasharray="5 3"/>' +
+         '<text x="' + x(m.median) + '" y="' + (T - 5) + '" font-size="12" font-weight="700" fill="#1F3864" text-anchor="middle">median ' + moneyK(m.median) + '</text>';
+    // dots
+    sales.forEach((r, i) => {
+      const cx = x(Number(r.price_per)), cy = y(Number(r.miles) || 0), ours = !!r.ours;
+      s += '<g><title>' + esc(r.city) + ', ' + esc(r.quarter) + ': ' + money(r.price_per) + ' ' + per(m.basis) + ', ' + esc(r.miles) + ' mi</title>' +
+           '<circle cx="' + cx + '" cy="' + cy + '" r="11" fill="' + (ours ? '#C9A227' : '#1F3864') + '" stroke="#fff" stroke-width="2"/>' +
+           '<text x="' + cx + '" y="' + (cy + 4) + '" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">' + (i + 1) + '</text></g>';
     });
-    return s + '</svg>';
+    return s + '</svg><div class="legend"><span><i style="background:#FFF2CC;border:1px solid #e6d28a"></i>middle half of sales</span><span><i style="background:#1F3864"></i>one sale, numbered as in the table</span></div>';
   }
 
-  function market(m, label) {
+  function market(m, label, blurb) {
     if (!m || !m.count) {
       return '<h3>' + esc(label) + '</h3><p class="muted">Too few graded sales within ' + esc(m ? m.radius_miles : '') + ' miles in the last ' + esc(m ? m.years : '') + ' years to show a band. We can widen the search for you.</p>';
     }
     const unit = per(m.basis);
-    let h = '<h3>' + esc(label) + '</h3>' +
-      '<p class="muted">' + m.count + ' graded sale' + (m.count == 1 ? '' : 's') + ' within ' + esc(m.radius_miles) + ' miles, last ' + esc(m.years) + ' years. Price ' + unit + '.</p>' +
-      '<div class="kpis">' +
-      '<div class="kpi"><div class="v">' + money(m.median) + '</div><div class="l">median ' + unit + '</div></div>' +
-      '<div class="kpi"><div class="v">' + money(m.low) + '</div><div class="l">lower quarter</div></div>' +
-      '<div class="kpi"><div class="v">' + money(m.high) + '</div><div class="l">upper quarter</div></div>' +
-      '</div>' + barChart(m.by_year, m.basis);
+    let h = '<h3>' + esc(label) + '</h3>' + (blurb ? '<p class="muted">' + esc(blurb) + '</p>' : '') +
+      '<div class="band-note"><div class="big"><div><div class="v">' + money(m.median) + '</div><div class="l">median price ' + unit + '</div></div>' +
+      '<div class="rng">Middle half of sales: <b>' + money(m.low) + '</b> to <b>' + money(m.high) + '</b><br><span style="opacity:.8">' + plural(m.count, 'graded sale') + ' within ' + esc(m.radius_miles) + ' miles, last ' + esc(m.years) + ' years</span></div></div>' +
+      '<div class="plot">' + (dotPlot(m) || '<p class="muted" style="padding:16px">Too few sales to chart. The table shows each one.</p>') + '</div></div>';
     if (m.sales && m.sales.length) {
-      h += '<table><thead><tr><th>Closed</th><th>Where</th><th>Type</th><th class="num">Units</th><th class="num">Built</th><th class="num">Price ' + unit + '</th><th class="num">Miles</th></tr></thead><tbody>';
-      m.sales.forEach((s) => {
-        h += '<tr' + (s.ours ? ' class="ours"' : '') + '><td>' + esc(s.quarter) + '</td><td>' + esc(s.city) + ', ' + esc(s.state) + (s.ours ? ' (' + esc(s.ours) + ', our sale)' : '') + '</td><td>' + esc(s.type) + '</td>' +
+      h += '<div class="tw"><table><thead><tr><th>#</th><th>Closed</th><th>Where</th><th>Type</th><th class="num">Units</th><th class="num">Built</th><th class="num">Price ' + unit + '</th><th class="num">Miles</th></tr></thead><tbody>';
+      m.sales.forEach((s, i) => {
+        h += '<tr' + (s.ours ? ' class="ours"' : '') + '><td><span class="dot">' + (i + 1) + '</span></td><td>' + esc(s.quarter) + '</td><td>' + esc(s.city) + ', ' + esc(s.state) + (s.ours ? ' (' + esc(s.ours) + ', our sale)' : '') + '</td><td>' + esc(s.type) + '</td>' +
              '<td class="num">' + num(s.units) + '</td><td class="num">' + esc(s.year_built || '') + '</td><td class="num">' + money(s.price_per) + '</td><td class="num">' + esc(s.miles) + '</td></tr>';
       });
-      h += '</tbody></table>';
+      h += '</tbody></table></div>';
     }
     if (m.caution) h += '<p class="caution">' + esc(m.caution) + '</p>';
     return h;
@@ -139,76 +232,116 @@
     const hide = new Set(d.hide || []);
     const props = d.properties || [];
     const states = Array.from(new Set(props.map((p) => p.state))).join(', ');
-    let h = '<div class="band"><div class="wrap"><div class="firm">Marcus &amp; Millichap &nbsp;|&nbsp; The Knapp Stahler Group</div>' +
-      '<h1>' + esc(d.title) + '</h1><div class="for">Prepared for ' + esc(d.prepared_for) + '</div>' +
-      '<div class="meta">' + esc(d.prepared_on) + (states ? ' &nbsp;|&nbsp; ' + esc(states) : '') + '</div></div></div><div class="wrap">';
+    const sh = d.market && d.market.seniors_housing, sn = d.market && d.market.skilled_nursing;
+    const showMarket = !hide.has('market') && (sh || sn);
+    const s = d.supply, showSupply = !hide.has('supply') && s;
+    const showClosings = !hide.has('closings') && d.closings && d.closings.length;
+    const showProcess = !hide.has('process') && d.process;
+    const showQ = !hide.has('questions') && d.questions;
+    const showChk = !hide.has('checklist') && d.checklist;
+
+    // top of page
+    const unitsTotal = props.reduce((a, p) => a + (Number(p.units) || Number(p.beds) || 0), 0);
+    let h = '<header class="band"><div class="wrap"><div class="firm">Marcus &amp; Millichap <i></i> The Knapp Stahler Group</div>' +
+      '<div class="eyebrow">Confidential market review</div><h1>' + esc(d.title) + '</h1><div class="for">Prepared for ' + esc(d.prepared_for) + '</div>' +
+      '<div class="meta">' + esc(d.prepared_on) + (states ? ' &nbsp;|&nbsp; ' + esc(states) : '') + '</div></div></header><div class="wrap">';
+
+    // at a glance
+    const g = [];
+    g.push('<div class="g"><div class="v">' + props.length + '</div><div class="l">' + (props.length === 1 ? 'property' : 'properties') + ' reviewed' + (unitsTotal ? ', ' + num(unitsTotal) + ' units and beds' : '') + '</div></div>');
+    if (showMarket) {
+      if (sh && sh.count) g.push('<div class="g"><div class="v">' + moneyK(sh.median) + '</div><div class="l">median per unit, ' + plural(sh.count, 'seniors housing sale') + ' nearby</div></div>');
+      if (sn && sn.count) g.push('<div class="g"><div class="v">' + moneyK(sn.median) + '</div><div class="l">median per bed, ' + plural(sn.count, 'skilled nursing sale') + ' nearby</div></div>');
+    }
+    if (showSupply) g.push('<div class="g"><div class="v">' + (s.projects ? num(s.units) : '0') + '</div><div class="l">' + (s.projects ? 'units in ' + plural(s.projects, 'competing project') + ' nearby' : 'competing units on file nearby') + '</div></div>');
+    h += '<div class="glance">' + g.join('') + '</div></div>';
+
+    // nav
+    const navItems = [['properties', 'Your property'], showMarket && ['market', 'What has traded'], showSupply && ['supply', 'What is being built'], showClosings && ['closings', 'Our closings'], showProcess && ['process', 'How we work'], showQ && ['questions', 'Questions'], showChk && ['checklist', 'Documents'], ['contact', 'Contact']].filter(Boolean);
+    h += '<nav class="sn"><div class="wrap">' + navItems.map((n) => '<a href="#' + n[0] + '" data-nav="' + n[0] + '">' + n[1] + '</a>').join('') + '<button class="pr" onclick="window.print()">Print or save as PDF</button></div></nav><div class="wrap">';
+
     if (d.intro) h += '<div class="intro">' + esc(d.intro).replace(/\n/g, '<br>') + '</div>';
 
-    h += '<section data-section="properties"><h2>Your propert' + (props.length === 1 ? 'y' : 'ies') + '</h2>' +
+    h += '<section id="properties" data-section="properties"><h2>Your propert' + (props.length === 1 ? 'y' : 'ies') + '</h2>' +
       '<p class="muted">As the public record shows ' + (props.length === 1 ? 'it' : 'them') + '. Tell us what is out of date.</p><div class="cards">';
     props.forEach((p) => {
-      h += '<div class="card"><div class="name">' + esc(p.name) + '</div><div class="addr">' + esc([p.address, p.city, p.state, p.zip].filter(Boolean).join(', ')) + '</div>' +
-           '<div class="muted">' + esc(p.type) + '</div><div class="facts">' + facts(p) + '</div></div>';
+      h += '<div class="card"><span class="chip">' + esc(p.type) + '</span><div class="name">' + esc(p.name) + '</div><div class="addr">' + esc([p.address, p.city, p.state, p.zip].filter(Boolean).join(', ')) + '</div>' +
+           '<div class="facts">' + facts(p) + '</div></div>';
     });
     h += '</div></section>';
 
-    if (!hide.has('market') && d.market && (d.market.seniors_housing || d.market.skilled_nursing)) {
-      h += '<section data-section="market"><h2>What has traded nearby</h2>';
-      if (d.market.seniors_housing) h += market(d.market.seniors_housing, 'Seniors housing (assisted living, memory care, independent living)');
-      if (d.market.skilled_nursing) h += market(d.market.skilled_nursing, 'Skilled nursing');
+    if (showMarket) {
+      h += '<section id="market" data-section="market"><h2>What has traded nearby</h2><p class="lede">Closed sales near your property, graded for quality of the record and matched to the same kind of care. No names, only place, size, age and price.</p>';
+      if (sh) h += market(sh, 'Seniors housing', 'Assisted living, memory care and independent living, priced per unit.');
+      if (sn) h += market(sn, 'Skilled nursing', 'Priced per bed. Never mixed with seniors housing.');
       h += '</section>';
     }
 
-    const s = d.supply;
-    if (!hide.has('supply') && s) {
-      h += '<section data-section="supply"><h2>What is being built nearby</h2>';
+    if (showSupply) {
+      h += '<section id="supply" data-section="supply"><h2>What is being built nearby</h2>';
       if (!s.projects) {
-        h += '<p>No competing senior housing construction on file within ' + esc(s.radius_miles) + ' miles. That is good news for an owner.</p>';
+        h += '<div class="good">No competing senior housing construction on file within ' + esc(s.radius_miles) + ' miles. That is good news for an owner.</div>';
       } else {
-        h += '<p>' + s.projects + ' project' + (s.projects == 1 ? '' : 's') + ' within ' + esc(s.radius_miles) + ' miles, ' + num(s.units) + ' units in all.</p>' +
-          '<table><thead><tr><th>Where</th><th>Stage</th><th>Type</th><th class="num">Units</th><th>Target completion</th><th class="num">Miles</th></tr></thead><tbody>';
+        h += '<p class="lede">' + plural(s.projects, 'project') + ' within ' + esc(s.radius_miles) + ' miles, ' + num(s.units) + ' units in all.</p>';
+        if (s.by_stage && s.by_stage.length) {
+          h += '<div class="stages">' + s.by_stage.map((b) => '<div class="stage"><b>' + num(b.units) + ' units</b><span>' + esc(b.stage) + ', ' + plural(b.projects, 'project') + '</span></div>').join('') + '</div>';
+        }
+        h += '<div class="tw"><table><thead><tr><th>Where</th><th>Stage</th><th>Type</th><th class="num">Units</th><th>Target completion</th><th class="num">Miles</th></tr></thead><tbody>';
         (s.list || []).forEach((r) => {
-          h += '<tr><td>' + esc(r.city) + ', ' + esc(r.state) + '</td><td>' + esc(r.stage) + '</td><td>' + esc(r.type || '') + '</td><td class="num">' + num(r.units) + '</td><td>' + esc(r.target_completion || '') + '</td><td class="num">' + esc(r.miles) + '</td></tr>';
+          h += '<tr><td>' + esc(r.city) + ', ' + esc(r.state) + '</td><td>' + esc(r.stage) + '</td><td>' + esc(r.type || '') + '</td><td class="num">' + num(r.units) + '</td><td>' + esc(mon(r.target_completion)) + '</td><td class="num">' + esc(r.miles) + '</td></tr>';
         });
-        h += '</tbody></table><p class="caution">Pipeline stages move; a project in planning may never break ground. We track these monthly.</p>';
+        h += '</tbody></table></div><p class="caution">Pipeline stages move; a project in planning may never break ground. We track these monthly.</p>';
       }
       h += '</section>';
     }
 
-    if (!hide.has('closings') && d.closings && d.closings.length) {
-      h += '<section data-section="closings"><h2>Recent closings by our team</h2><table><thead><tr><th>Property</th><th>Where</th><th>Closed</th><th>Type</th><th class="num">Units</th><th class="num">Price</th><th class="num">Per unit or bed</th></tr></thead><tbody>';
+    if (showClosings) {
+      h += '<section id="closings" data-section="closings"><h2>Recent closings by our team</h2><p class="lede">Sales we represented, so you can see the work behind the process below.</p><div class="tw"><table><thead><tr><th>Property</th><th>Where</th><th>Closed</th><th>Type</th><th class="num">Units</th><th class="num">Price</th><th class="num">Per unit or bed</th></tr></thead><tbody>';
       d.closings.forEach((c) => {
-        h += '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.city) + ', ' + esc(c.state) + '</td><td>' + esc(c.quarter) + '</td><td>' + esc(c.type) + '</td><td class="num">' + num(c.units) + '</td><td class="num">' + money(c.price) + '</td><td class="num">' + money(c.price_per_unit || c.price_per_bed) + '</td></tr>';
+        h += '<tr><td><b>' + esc(c.name) + '</b></td><td>' + esc(c.city) + ', ' + esc(c.state) + '</td><td>' + esc(c.quarter) + '</td><td>' + esc(c.type) + '</td><td class="num">' + num(c.units) + '</td><td class="num">' + money(c.price) + '</td><td class="num">' + money(c.price_per_unit || c.price_per_bed) + '</td></tr>';
       });
-      h += '</tbody></table></section>';
+      h += '</tbody></table></div></section>';
     }
 
-    if (!hide.has('process') && d.process) {
-      h += '<section data-section="process"><h2>How we would run it</h2><div class="callout">The Knapp Stahler Group brings qualified Buyers to the table and runs the deal start to finish, on your timeline and under confidentiality.</div><ol class="steps">';
-      d.process.forEach((st) => { h += '<li><b>' + esc(st.step) + '</b>' + esc(st.detail) + '</li>'; });
+    if (showProcess) {
+      h += '<section id="process" data-section="process"><h2>How we would run it</h2><div class="callout">The Knapp Stahler Group brings qualified Buyers to the table and runs the deal start to finish, on your timeline and under confidentiality.</div><ol class="steps">';
+      d.process.forEach((st) => { h += '<li><b>' + esc(st.step) + '</b><span>' + esc(st.detail) + '</span></li>'; });
       h += '</ol></section>';
     }
 
-    if (!hide.has('questions') && d.questions) {
-      h += '<section data-section="questions"><h2>Questions for you</h2><p class="muted">The answers shape the value and the plan. Nothing here is shared.</p><ol class="q">';
+    if (showQ) {
+      h += '<section id="questions" data-section="questions"><h2>Questions for you</h2><p class="muted">The answers shape the value and the plan. Nothing here is shared.</p><ol class="qs">';
       d.questions.forEach((q) => { h += '<li>' + esc(q) + '</li>'; });
       h += '</ol></section>';
     }
 
-    if (!hide.has('checklist') && d.checklist) {
-      h += '<section data-section="checklist"><h2>For a full broker opinion of value</h2><p class="muted">Six items, under a confidentiality agreement:</p><ul class="chk">';
+    if (showChk) {
+      h += '<section id="checklist" data-section="checklist"><h2>For a full broker opinion of value</h2><p class="muted">' + plural(d.checklist.length, 'item').replace(/^(\d+)/, (m) => ({ 3: 'Three', 4: 'Four', 5: 'Five', 6: 'Six', 7: 'Seven', 8: 'Eight' }[m] || m)) + ', under a confidentiality agreement:</p><ul class="chk">';
       d.checklist.forEach((c) => { h += '<li>' + esc(c) + '</li>'; });
       h += '</ul></section>';
     }
 
     const a = d.advisor || {};
-    h += '<section data-section="contact"><div class="contact"><div><div class="n">' + esc(a.name) + '</div><div class="t">' + esc(a.title) + ' &nbsp;|&nbsp; ' + esc(a.firm) + ' &nbsp;|&nbsp; ' + esc(a.team) + '</div>' +
-      '<div class="lines">Cell: <a href="tel:' + esc((a.cell || '').replace(/\D/g, '')) + '">' + esc(a.cell) + '</a><br>Direct: <a href="tel:' + esc((a.direct || '').replace(/\D/g, '')) + '">' + esc(a.direct) + '</a><br>' +
-      '<a href="mailto:' + esc(a.email) + '">' + esc(a.email) + '</a><br>' + esc(a.office) + '</div></div></div></section>';
+    const tel = (v) => esc((v || '').replace(/\D/g, ''));
+    h += '<section id="contact" data-section="contact"><div class="contact"><div class="ask">Next step</div><div class="n">' + esc(a.name) + '</div><div class="t">' + esc(a.title) + ' &nbsp;|&nbsp; ' + esc(a.firm) + ' &nbsp;|&nbsp; ' + esc(a.team) + '</div>' +
+      '<div class="btns"><a class="btn" href="tel:' + tel(a.cell) + '">Call ' + esc(a.cell) + '</a><a class="btn o" href="mailto:' + esc(a.email) + '">Email ' + esc(a.email) + '</a></div>' +
+      '<div class="lines">Direct: <a href="tel:' + tel(a.direct) + '">' + esc(a.direct) + '</a><br>' + esc(a.office) + '</div></div></section>';
     h += '<footer>' + esc(d.footer) + ' This page is active until ' + esc(d.expires_on) + '.</footer></div>';
     app.innerHTML = h;
-    document.title = esc(d.title) + ' | The Knapp Stahler Group';
+    document.title = d.title + ' | The Knapp Stahler Group';
     track();
+    navSpy();
+  }
+
+  // highlight the section in view in the sticky nav
+  function navSpy() {
+    if (!('IntersectionObserver' in window)) return;
+    const links = {};
+    document.querySelectorAll('nav.sn a').forEach((a) => { links[a.getAttribute('data-nav')] = a; });
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => { if (e.isIntersecting) { Object.values(links).forEach((l) => l.classList.remove('on')); const l = links[e.target.id]; if (l) l.classList.add('on'); } });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    document.querySelectorAll('section[id]').forEach((el) => io.observe(el));
   }
 
   // Which sections were read, and how long the page was open. Nothing about the reader is kept

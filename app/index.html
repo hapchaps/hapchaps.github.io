@@ -7802,7 +7802,7 @@ function scSetView(v){ scGo({view: v==='deals'?null:v, sort:null, dir:null}); }
 function scSort(col, defSort){
   const curSort = scParams.get('sort') || defSort || 'date';
   const curDir = scParams.get('dir') || 'desc';
-  const dir = curSort===col ? (curDir==='desc'?'asc':'desc') : (['name','city','buyer'].includes(col)?'asc':'desc');
+  const dir = curSort===col ? (curDir==='desc'?'asc':'desc') : (['name','city','state','buyer'].includes(col)?'asc':'desc');
   scGo({sort: col, dir: dir});
 }
 
@@ -7826,11 +7826,16 @@ async function scFetch(p, extra){
 // NIC MAP's arrived pre-rounded. Cents on a price per unit are noise.
 function scMoney(n){ return n==null ? '<span class="empty">-</span>' : '$'+Math.round(Number(n)).toLocaleString(); }
 
+let scReqSeq = 0;
 async function renderSalesComps(p){
   scParams = p;
   const view = scView(p);
   if(!scPageCache.has(scCacheKey(p))) app.innerHTML = '<div class="spinner">Loading sale comps...</div>';
+  const myReq = ++scReqSeq;
   const d = await scFetch(p);
+  // Chips clicked in quick succession fire overlapping fetches; only the newest may paint,
+  // or a slow earlier response lands last and shows the wrong state's rows.
+  if(myReq !== scReqSeq) return;
   scLast = d;
 
   const head = scHeadHTML(p, d, view);
@@ -7987,7 +7992,7 @@ function scRenderDeals(p, d, head){
       ${th('date','Sold')}
       ${th('name','Property')}
       ${th('city','City')}
-      <th>ST</th>
+      ${th('state','ST')}
       <th>Acuity</th>
       ${th('units','Size','n')}
       <th>IL / AL / MC</th>
