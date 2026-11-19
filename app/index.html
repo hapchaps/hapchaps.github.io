@@ -798,6 +798,24 @@
   .contact .cr { color: var(--muted); font-size: 12.5px; }
   .contact .cc { margin-top: 3px; font-size: 13px; }
 
+  /* Deal Stories */
+  .ds-q { width: 100%; max-width: 420px; margin: 10px 0 14px; padding: 8px 11px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; color: var(--text); font-size: 13.5px; }
+  .ds-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; }
+  .ds-card[open] { border-color: var(--accent); }
+  .ds-card summary { cursor: pointer; padding: 11px 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; list-style: none; }
+  .ds-card summary::-webkit-details-marker { display: none; }
+  .ds-card summary::before { content: '\25B8'; color: var(--muted); margin-right: -6px; }
+  .ds-card[open] summary::before { content: '\25BE'; }
+  .ds-card summary:hover { background: var(--rowhover); border-radius: 8px; }
+  .ds-name { font-weight: 700; font-size: 15px; }
+  .ds-meta { color: var(--muted); font-size: 12.5px; flex: 1 1 200px; }
+  .ds-chips { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; }
+  .ds-chips b { color: var(--good); font-size: 14px; }
+  .ds-chips i { color: var(--text); font-style: normal; background: var(--chip); padding: 2px 8px; border-radius: 10px; }
+  .ds-chips em { color: var(--muted); font-style: normal; min-width: 62px; text-align: right; }
+  .ds-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 22px; padding: 4px 16px 16px; border-top: 1px solid var(--line); }
+  .ds-blk h4 { margin: 12px 0 5px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .ds-blk ul { margin: 0; padding-left: 17px; font-size: 13.5px; line-height: 1.55; }
   .empty-msg { color: var(--muted); font-size: 13.5px; font-style: italic; }
 
   /* landing */
@@ -1234,6 +1252,7 @@
   <a class="navlink" id="nav-salescomps" onclick="location.hash='salescomps'">&#128200; Sales Comp Report</a>
   <a class="navlink" id="nav-buyerlist" onclick="location.hash='buyerlist'">&#129309; Buyers List</a>
   <a class="navlink" id="nav-loans" onclick="location.hash='loans'">&#127974; Loans Coming Due</a>
+  <a class="navlink" id="nav-dealstories" onclick="location.hash='dealstories'">&#128214; Deal Stories</a>
   <a class="navlink" id="nav-mergereview" style="display:none" onclick="location.hash='mergereview'">&#128279; Merge Review<span class="navct" id="merge-count"></span></a>
 </header>
 <div class="filterbar" id="filterbar">
@@ -1498,6 +1517,8 @@ function route(){
   document.getElementById('nav-databased').classList.toggle('active', onDatabased);
   document.getElementById('nav-targets').classList.toggle('active', onTargets);
   document.getElementById('nav-loans').classList.toggle('active', h.startsWith('loans'));
+  document.getElementById('nav-dealstories').classList.toggle('active', h.startsWith('dealstories'));
+  if(h.startsWith('dealstories')) return renderDealStories();
   document.getElementById('nav-salescomps').classList.toggle('active', onSalesComps);
   document.getElementById('nav-developments').classList.toggle('active', onDevelopments);
   document.getElementById('nav-buyerlist').classList.toggle('active', h.startsWith('buyerlist'));
@@ -1906,7 +1927,7 @@ function briefHTML(b){
         <div class="b-sub">${esc([r.comp_city, r.comp_state].filter(Boolean).join(', '))}</div></td>
       <td>${r.buyer_name?'Buyer: '+esc(r.buyer_name):''}${r.seller_name?`<div class="b-sub">Seller: ${esc(r.seller_name)}</div>`:''}</td>
       <td>${esc([price, ppu].filter(Boolean).join(' \u00b7 '))}</td>
-      <td class="b-when">closed ${esc(fmtTouchDate(r.close_date)||'')}</td>
+      <td class="b-when">closed ${esc(monthYear((r.close_date||'').slice(0,10)))}</td>
     </tr>`; }, 'No new sales loaded in the last 7 days.');
 
   // Suggestions from the daily check in Supabase (the monitoring desk). Facts only: nothing
@@ -2109,7 +2130,7 @@ async function renderProperty(id){
         ? `<a onclick="location.hash='entity/${esc(t.seller_entity_id)}'" style="cursor:pointer">${esc(t.seller_name||'-')}</a>`
         : esc(t.seller_name||'-');
       rows += `<tr>
-        <td class="dt">${esc(t.close_date||'')}</td>
+        <td class="dt" data-sort="${esc(t.close_date||'')}" title="${esc((t.close_date||'').slice(0,10))}">${esc(monthYear((t.close_date||'').slice(0,10)))}</td>
         <td>${money(t.close_price)||'-'}${t.is_portfolio?` <span class="chip status" title="This price covers more than this one building">portfolio</span>`:''}</td>
         <td>${money(t.price_per_unit)||'-'}</td>
         <td>${t.cap_rate!=null?(t.cap_rate*1).toFixed(2)+'%':'-'}</td>
@@ -4005,7 +4026,7 @@ function txRows(txns, showUnit){
       : '<span class="empty">-</span>';
     const units = t.units_at_sale ? num(t.units_at_sale) : '<span class="empty">-</span>';
     rows += `<tr>
-      <td class="dt">${esc(t.close_date||'')}</td>
+      <td class="dt" data-sort="${esc(t.close_date||'')}" title="${esc((t.close_date||'').slice(0,10))}">${esc(monthYear((t.close_date||'').slice(0,10)))}</td>
       <td>${t.side==='bought'?'Bought':'Sold'}</td>
       <td>${t.property_id?`<a onclick="location.hash='property/${t.property_id}'" style="cursor:pointer">${esc(t.property_name||'(unnamed)')}</a>`:esc(t.property_name||'-')}</td>
       <td style="white-space:nowrap">${acuity}</td>
@@ -6321,7 +6342,8 @@ function paintHot(keepScroll){
   // under the row.
   let html = head + `<div class="panel targets-panel" style="margin-top:0"><table class="cl hotrows">
     <thead><tr><th></th><th>Owner</th><th>What they own</th><th>Main contact</th>
-      <th>Last contact</th><th>Latest note</th><th>Bucket</th></tr></thead><tbody>`;
+      <th onclick="setHotSort('stale')" style="cursor:pointer;white-space:nowrap;user-select:none"
+        title="Click to sort oldest first or newest first">Last contact${hotSort === 'stale' ? (hotDir === 'desc' ? ' &#9660;' : ' &#9650;') : ' &#8645;'}</th><th>Latest note</th><th>Bucket</th></tr></thead><tbody>`;
   for(const g of rows){
     const gk = g.group_kind, gid = g.group_id, open = hotOpen.has(g.key);
     const mc = g.main_contact;
@@ -7323,9 +7345,9 @@ async function exportAllPropsCSV(){
 // Same territory/metro chips, owner, last-contact and note columns as the other rosters, plus
 // a Loan column (why to call, and when) and a Terms column (rate, balance, lender).
 // Known REIT/chain owners are hidden by default: they refinance through a treasury desk.
-let lnLast = null, lnState = '', lnRegion = '', lnMetro = '', lnSignal = '', lnInst = false, lnSort = '', lnDir = 'asc';
+let lnLast = null, lnState = '', lnRegion = '', lnMetro = '', lnSignal = '', lnInst = false, lnAll = false, lnSort = '', lnDir = 'asc';
 const lnPageCache = new Map();
-const LOAN_SIGNAL_CLASS = {distress:'ln-hot', past_due:'ln-hot', due_12:'ln-hot', due_24:'ln-warm', due_36:'ln-cool', hud_high:'ln-refi', hud_low:'ln-assume'};
+const LOAN_SIGNAL_CLASS = {distress:'ln-hot', past_due:'ln-hot', due_12:'ln-hot', due_24:'ln-warm', due_36:'ln-cool', hud_high:'ln-refi', hud_low:'ln-assume', recorded:'status'};
 function lnQuery(s, offset){
   const p = new URLSearchParams();
   if(s.state) p.set('state', s.state);
@@ -7333,11 +7355,12 @@ function lnQuery(s, offset){
   if(s.metro) p.set('metro', s.metro);
   if(s.signal) p.set('signal', s.signal);
   if(s.inst) p.set('inst', '1');
+  if(s.all) p.set('all', '1');
   if(s.sort){ p.set('sort', s.sort); p.set('dir', s.dir || 'asc'); }
   if(offset) p.set('offset', offset);
   return p;
 }
-function lnCur(){ return {state: lnState, region: lnRegion, metro: lnMetro, signal: lnSignal, inst: lnInst, sort: lnSort, dir: lnDir}; }
+function lnCur(){ return {state: lnState, region: lnRegion, metro: lnMetro, signal: lnSignal, inst: lnInst, all: lnAll, sort: lnSort, dir: lnDir}; }
 async function fetchLoansPage(s, offset){
   const qs = lnQuery(s, offset).toString();
   if(lnPageCache.has(qs)) return lnPageCache.get(qs);
@@ -7356,7 +7379,7 @@ function setLoansPage(off){ lnGo({offset: off || 0}); }
 function setLoansSort(col, defDir){ lnGo({sort: col, dir: lnSort === col ? (lnDir === 'desc' ? 'asc' : 'desc') : defDir}); }
 async function renderLoans(p){
   lnState = p.get('state') || ''; lnRegion = p.get('region') || ''; lnMetro = p.get('metro') || '';
-  lnSignal = p.get('signal') || ''; lnInst = p.get('inst') === '1';
+  lnSignal = p.get('signal') || ''; lnInst = p.get('inst') === '1'; lnAll = p.get('all') === '1';
   lnSort = p.get('sort') || ''; lnDir = p.get('dir') || 'asc';
   const off = parseInt(p.get('offset'), 10) || 0;
   const qs = lnQuery(lnCur(), off).toString();
@@ -7369,6 +7392,91 @@ async function renderLoans(p){
   paintLoans();
   const rows = d.loans || [], limit = d.limit || 40;
   if(off + rows.length < (d.count || 0)) fetchLoansPage(lnCur(), off + limit).catch(()=>{});
+}
+
+// ---------- Deal Stories ----------
+// Hap's closed deals as quick bullets, one dropdown per deal, same layout every time.
+// Data lives right here so it works on the PC app and the cloud page alike. To add a deal,
+// add one object: sale (ISO date), then the five groups. Newest sale shows first.
+const DEAL_STORIES = [
+ {name:'Santa Rosa Care Center', addr:'1650 N Santa Rosa Ave, Tucson, AZ 85712', sale:'2025-12-01', price:'$30,000,000', headline:'$209k per bed',
+  deal:['Sale Date: December 1, 2025','Sale Price: $30,000,000','$209k per bed for SNF'],
+  property:['144 Beds','39,685 sq ft building','1966 construction'],
+  financials:[], seller:'Harvey Nevins', buyer:'IEP / Ensign', notes:[]},
+ {name:'Katella Senior Living and Alamitos West Health & Rehabilitation', addr:'3952 and 3902 Katella Ave, Los Alamitos, CA 90720', sale:'2025-04-01', price:'$34,500,000', headline:'$156k per bed SNF, $257k per unit AL/MC',
+  deal:['Sale Date: April 1, 2025','Sale Price: $34,500,000','$156k per bed for SNF, $23.5MM SNF balance for the AL','$257k per unit for AL/MC','NO CAP on SNF'],
+  property:['134 Units, 150 Beds (142 operating)','72k combined square feet','1969 construction'],
+  financials:['Fully stabilized','SNF was $200k positive'], seller:'Jon B Goodman Enterprises, Inc', buyer:'CareTrust REIT, Inc / IEP / Ensign Operator', notes:[]},
+ {name:'Retreat at Alameda', addr:'1920 W Alameda Rd, Phoenix, AZ 85085', sale:'2025-03-25', price:'$21,250,000', headline:'$205k per unit',
+  deal:['Sale Date: March 25, 2025','Sale Price: $21,250,000','$205k per unit'],
+  property:['104 Units, 110 Beds: 72 IL and AL, 32 MC Units (38 MC Beds)','39,685 sq ft building','2021 construction'],
+  financials:['$340,000 in NOI as of August 2025','75% occupied as of September 2025'], seller:'Civitas Capital', buyer:'Clarion / Stellar', notes:[]},
+ {name:'Denver Skilled Nursing (Aspen Siesta)', addr:'5353 E Yale Avenue, Denver, CO 80222', sale:'2025-05-15', price:'$3,350,000', headline:'$98k per bed',
+  deal:['Sale Date: May 15, 2025','Sale Price: $3,350,000','$98k per bed for SNF','NO CAP on SNF'],
+  property:['34 Beds','21,925 sq ft building','72k combined square feet','1969 construction'],
+  financials:[], seller:'The Devil', buyer:'Frank Braider',
+  notes:['Off highway 25, about 10 minutes south of downtown Denver','Rezoned for drug and alcohol rehab']},
+ {name:'MorningStar at Arcadia', addr:'3200 E Glenrosa Ave, Phoenix, AZ 85018', sale:'2024-08-09', price:'$28,250,000', headline:'8.5% cap, $261k per unit',
+  deal:['Sale Date: August 9, 2024','Sale Price: $28,250,000','8.5% CAP','$261k per unit'],
+  property:['108 Units, 135 Beds','119K square foot building','2016 construction'],
+  financials:['$2,400,000 in EBITDAR (T6A)','28% margin','Fully stabilized','86% occupied at time of sale'], seller:'Jon Larmore, Arciterra / Stone Turn Federal Receivership Group', buyer:'12-North, Frank Small / Sabal Capital', notes:[]},
+ {name:'Inspira Arrowhead', addr:'Glendale, AZ', sale:'2024-04-24', price:'$42,650,000', headline:'6.9 cap, $260 to 270k per unit',
+  deal:['Sale Date: April 24, 2024','Sale Price: $42,650,000','6.9 CAP','$260 to 270k per unit'],
+  property:['165 Units, IL / AL / MC','2019 construction','Soft to minor construction defect'],
+  financials:['Positive EBITDAR','28% margin','Fully stabilized'], seller:'', buyer:'', notes:[]},
+ {name:'Santa Rosa Care Center (Real Estate Only)', addr:'1650 N Santa Rosa Ave, Tucson, AZ 85712', sale:'2022-08-01', price:'$17,200,000', headline:'$119,400 per bed',
+  deal:['Sale Date: August 2022','Sale Price: $17,200,000','$119,400 per bed'],
+  property:['144 Beds','1966 construction','Behavioral health facility / SNF'],
+  financials:['$12,600,000 in revenue','72% occupied at time of sale','32% operating margins'], seller:'Diane Miller', buyer:'Harvey Nevins',
+  notes:['Harvey was operator and Diane owned the real estate on the asset','Nick and I presented to Diane and Harvey at the same time, then facilitated the transaction']},
+ {name:'Mariposa Point of Gilbert', addr:'1445 E Willis Rd, Gilbert, AZ 85297', sale:'2022-02-22', price:'$17,500,000', headline:'$210,000 per unit',
+  deal:['Sale Date: February 22, 2022','Sale Price: $17,500,000','$210,000 per unit'],
+  property:['83 Units, 121 Beds','2016 construction'],
+  financials:['Gross Revenue: $2,960,000 (T3 annualized June 2021)','Normalized NOI: $73,996 (T3 annualized June 2021)','65 to 70% occupied at time of sale'], seller:'McFarlin Group', buyer:'MBK', notes:['Now named Sky Ridge']},
+ {name:'Mariposa Point of Mesa', addr:'1248 S Crismon Rd, Mesa, AZ 85209', sale:'2021-11-01', price:'$19,250,000', headline:'$231,000 per unit',
+  deal:['Sale Date: November 2021','Sale Price: $19,250,000','$231,000 per unit'],
+  property:['83 Units, 121 Beds','2016 construction'],
+  financials:['Gross Revenue: $3,663,000 (T3 annualized April 2021)','Normalized NOI: $636,324 (T3 annualized April 2021)','72% occupied at time of sale'], seller:'McFarlin Group', buyer:'MBK', notes:['Now named Sky Vista']},
+ {name:'Soquel Development', addr:'82 units on the coast of Soquel, CA', sale:'2021-10-29', price:'$6,750,000', headline:'$82,317 per unit',
+  deal:['Sale Date: October 29, 2021','Sale Price: $6,750,000','$82,317 per unit','Price per acre: $1,785,000'],
+  property:['3.35 AC','164,657 total SF (145,795 SF also noted)','82 Units'],
+  financials:[], seller:'Fulcrum', buyer:'Jason Reyes, Operator', notes:['Old church, vacant, rezoned and entitled for AL/MC']},
+ {name:'Barton House Senior Living', addr:'7001 E Mountain View Rd, Scottsdale, AZ 85253', sale:'', price:'', headline:'Details to come',
+  deal:[], property:[], financials:[], seller:'', buyer:'', notes:[]}
+];
+function dsMonYr(iso){ return iso ? fmtMonYr(iso.slice(0,7)) : ''; }
+function dsBlock(title, items){
+  const li = (items||[]).filter(Boolean);
+  if(!li.length) return '';
+  return `<div class="ds-blk"><h4>${title}</h4><ul>${li.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+}
+function renderDealStories(){
+  const deals = DEAL_STORIES.slice().sort((a,b)=>(b.sale||'').localeCompare(a.sale||''));
+  const card = d => {
+    const parties = [d.seller?`Seller: ${d.seller}`:'', d.buyer?`Buyer: ${d.buyer}`:''];
+    const hay = esc([d.name,d.addr,d.seller,d.buyer,d.price,(d.notes||[]).join(' ')].join(' ').toLowerCase());
+    return `<details class="ds-card" data-hay="${hay}">
+      <summary>
+        <span class="ds-name">${esc(d.name)}</span>
+        <span class="ds-meta">${esc(d.addr)}</span>
+        <span class="ds-chips">${d.price?`<b>${esc(d.price)}</b>`:''}${d.headline?`<i>${esc(d.headline)}</i>`:''}<em title="${esc(d.sale||'')}">${esc(dsMonYr(d.sale))}</em></span>
+      </summary>
+      <div class="ds-grid">
+        ${dsBlock('The Deal', d.deal)}${dsBlock('The Property', d.property)}${dsBlock('The Numbers', d.financials)}${dsBlock('The Parties', parties)}${dsBlock('Notes', d.notes)}
+        ${(d.deal||[]).length||(d.property||[]).length ? '' : '<div class="empty-msg">No details entered yet.</div>'}
+      </div></details>`;
+  };
+  app.innerHTML = `<div class="cl-head"><h1>&#128214; Deal Stories</h1>
+      <a class="navlink" style="padding:5px 11px;font-size:13px" onclick="dsToggle(true)">Expand all</a>
+      <a class="navlink" style="padding:5px 11px;font-size:13px" onclick="dsToggle(false)">Collapse all</a></div>
+    <div class="cl-sub"><b>${deals.length}</b> closed deals, newest first. Click a deal for the highlights.</div>
+    <input id="ds-q" class="ds-q" type="text" placeholder="Filter by name, city, Buyer, Seller..." oninput="dsFilter(this.value)">
+    <div id="ds-list">${deals.map(card).join('')}</div>`;
+}
+function dsToggle(open){ document.querySelectorAll('#ds-list .ds-card').forEach(d=>{ if(d.style.display!=='none') d.open=open; }); }
+function dsFilter(v){
+  v=(v||'').toLowerCase().trim();
+  document.querySelectorAll('#ds-list .ds-card').forEach(d=>{ d.style.display = (!v || d.dataset.hay.includes(v)) ? '' : 'none'; });
 }
 function fmtMonYr(iso){
   if(!iso) return '';
@@ -7412,7 +7520,12 @@ function loanCell(r){
   const chip = `<span class="chip ${LOAN_SIGNAL_CLASS[r.loan_signal]||'status'}" title="${esc(sig.help||'')}">${esc(sig.label||r.loan_signal||'')}</span>`;
   const src = loanSrcLabel(r.loan_source);
   let when = '';
-  if(r.loan_maturity_date && !(r.loan_signal === 'hud_high' || r.loan_signal === 'hud_low'))
+  if(r.loan_signal === 'recorded'){
+    const bits = [];
+    if(r.loan_origination_date) bits.push('recorded ' + fmtMonYr(r.loan_origination_date));
+    if(r.loan_maturity_date && r.loan_months != null && r.loan_months >= 0) bits.push('due ' + fmtMonYr(r.loan_maturity_date));
+    when = bits.length ? `<div class="ln-sub">${esc(bits.join(' · '))}</div>` : '';
+  } else if(r.loan_maturity_date && !(r.loan_signal === 'hud_high' || r.loan_signal === 'hud_low'))
     when = `<div class="ln-sub">${esc(fmtMonYr(r.loan_maturity_date))} &middot; ${esc(loanWhen(r.loan_months))}</div>`;
   else if(r.loan_maturity_date)
     when = `<div class="ln-sub">matures ${esc(r.loan_maturity_date.slice(0,4))}</div>`;
@@ -7444,8 +7557,8 @@ function paintLoans(){
   let head = `<div class="cl-head"><h1>&#127974; Loans Coming Due</h1>
     ${filTotal?`<a class="navlink" style="padding:5px 11px;font-size:13px" onclick="exportLoansCSV()">Download CSV</a>`:''}
   </div>
-  <div class="cl-sub">Buildings whose loan is maturing, or whose HUD loan is worth a refinance or an assumable-debt sale pitch.
-    Maturity dates from CoStar, rates and balances from HUD${d.hud_as_of?` (as of ${esc(d.hud_as_of)})`:''}, lenders and default filings from county records (Arizona so far).
+  <div class="cl-sub">${lnAll?'<b>All loans view:</b> every building with a live recorded loan, maturing ones first. ':''}Buildings whose loan is maturing, or whose HUD loan is worth a refinance or an assumable-debt sale pitch.
+    Maturity dates from CoStar, rates and balances from HUD${d.hud_as_of?` (as of ${esc(d.hud_as_of)})`:''}, lenders, amounts and default filings from county records (Arizona and California).
     <b>${num(total)}</b> buildings${filTotal!==total?` &middot; <b>${num(filTotal)}</b> match these filters`:''}.</div>`;
 
   head += `<div class="cl-cats"><span class="lbl">Territory:</span>`;
@@ -7488,6 +7601,7 @@ function paintLoans(){
     head += `<span class="catchip ${lnSignal===s.signal?'active':''}" title="${esc(s.help)}" onclick="lnGo({signal: lnSignal==='${s.signal}'?'':'${s.signal}'})">${esc(s.label)}<span class="ct">${num(s.count)}</span></span>`;
   }
   head += `<span class="catchip ${lnInst?'active':''}" style="margin-left:14px" title="Known REITs and chains (Brookdale, Ventas, Pacifica...). Hidden by default: they refinance through a treasury desk, not off a broker call." onclick="lnGo({inst: !lnInst})">${lnInst?'Showing':'Show'} big owners<span class="ct">${num(d.n_institutional||0)}</span></span>`;
+  head += `<span class="catchip ${lnAll?'active':''}" title="Also list every building with a live recorded loan (lender, amount, recording date) even when no maturity is coming due." onclick="lnGo({all: !lnAll, signal: lnAll && lnSignal==='recorded' ? '' : lnSignal})">${lnAll?'Showing':'Show'} all loans on file<span class="ct">${num(d.n_recorded||0)}</span></span>`;
   head += `</div>`;
 
   if(!rows.length){
@@ -8151,7 +8265,7 @@ async function scRenderSelected(p, d, head){
     rows += `<div class="selpick">
       <span class="muted" style="width:18px">${i+1}</span>
       <span class="grow"><a onclick="location.hash='comp/${esc(c.id)}'" style="cursor:pointer"><b>${esc(c.comp_name||'')}</b></a>
-        <span class="muted"> ${esc(c.comp_city||'')}, ${esc(c.comp_state||'')} &middot; ${esc((c.close_date||'').slice(0,10))}
+        <span class="muted"> ${esc(c.comp_city||'')}, ${esc(c.comp_state||'')} &middot; ${esc(monthYear((c.close_date||'').slice(0,10)))}
         &middot; ${c.units_at_sale||'?'} ${c.ppu_basis==='bed'?'beds':'units'}</span>
         ${flags.length?`<span class="reviewdot" title="${esc(flags.join(', ').replace(/_/g,' '))}">&#9888;</span>`:''}</span>
       <span style="white-space:nowrap"><b>${c.ppu?scMoney(c.ppu):'<span class=empty>-</span>'}</b>${c.ppu_basis==='bed'?'<span class="muted" style="font-size:10px">/bed</span>':''}</span>
@@ -8359,7 +8473,7 @@ async function scRenderMap(p, d, head){
 
 function scMapPopup(r){
   const bits = [];
-  if(r.close_date) bits.push(esc((r.close_date||'').slice(0,10)));
+  if(r.close_date) bits.push(esc(monthYear((r.close_date||'').slice(0,10))));
   if(r.close_price) bits.push('$'+Number(r.close_price).toLocaleString());
   if(r.ppu) bits.push('$'+Math.round(r.ppu).toLocaleString()+(r.ppu_basis==='bed'?'/bed':'/unit'));
   const buyer = r.buyer_name
@@ -8485,7 +8599,7 @@ async function submitAddComp(btn, force){
     const TX_SRC_LABEL = {nicmap_tx:'NIC MAP', dee:'Dee', manual:'Entered by hand', costar_alert:'CoStar'};
     const rows = (j.duplicates||[]).map(d =>
       `<div>&middot; <a onclick="location.hash='comp/${esc(d.id)}'">${esc(d.comp_name)}</a>`
-      + `${d.comp_city?', '+esc(d.comp_city):''} &middot; ${esc((d.close_date||'').slice(0,10))}`
+      + `${d.comp_city?', '+esc(d.comp_city):''} &middot; ${esc(monthYear((d.close_date||'').slice(0,10)))}`
       + `${d.close_price?' &middot; $'+Number(d.close_price).toLocaleString():''} <span class="src ${esc(d.source)}">${esc(TX_SRC_LABEL[d.source]||d.source)}</span></div>`).join('');
     document.getElementById('ac-dupe').innerHTML =
       `<div class="prof-alt" style="border:1px solid var(--warn);border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:12.5px">
@@ -8517,7 +8631,7 @@ async function renderCompProfile(id){
   let html = back + `<div class="dhead">
     <h1>${esc(t.comp_name||'(unnamed comp)')} ${acuity} ${grade}</h1>
     <div class="addr">${[t.comp_address, [t.comp_city,t.comp_state].filter(Boolean).join(', '), t.comp_zip].filter(Boolean).map(esc).join(' &middot; ')}</div>
-    <div class="meta">Sold ${esc((t.close_date||'').slice(0,10))}
+    <div class="meta">Sold ${esc(monthYear((t.close_date||'').slice(0,10)))}
       ${t.close_price?' &middot; '+'$'+Number(t.close_price).toLocaleString():''}
       ${t.units_at_sale?' &middot; '+t.units_at_sale+' units':''} ${flags}</div>
     ${window.COMPS_ONLY ? '' : (t.property_id
@@ -8842,7 +8956,7 @@ if(window.COMPS_ONLY){
   // hash changes, so deleting the elements throws on the first render.
   const hide = sel => { const el = typeof sel==='string' ? document.querySelector(sel) : sel;
                         if(el) el.style.display = 'none'; };
-  ['#nav-hot','#nav-allprops','#nav-targets','#nav-loans','#nav-databased','#nav-buyerlist','#nav-mergereview','.searchwrap','#filterbar']
+  ['#nav-hot','#nav-allprops','#nav-targets','#nav-loans','#nav-dealstories','#nav-databased','#nav-buyerlist','#nav-mergereview','.searchwrap','#filterbar']
     .forEach(hide);
   // The comp report brings its own filter bar; the master one drives facility search.
   document.title = 'Sales Comp Report';
