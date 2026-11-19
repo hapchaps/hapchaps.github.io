@@ -3380,7 +3380,7 @@ function renderContacts(cs, opts){
           ${contactLog(c)}
         </div>
         <div class="contact-actions">
-          ${touchChip('contact', c.id, c.last_touch_date, 'touchRefreshProperty')}
+          ${touchChip('contact', c.id, c.last_touch_date, 'touchRefreshProperty')} ${nextInline('contact', c.id)}
           ${curOwnerNames.has(nameKey(contactName(c)))
             ? `<span class="isowner" title="Already recorded on this property's real estate owner stack">&#10003; owner of record</span>`
             : `<a class="mkowner" data-name="${esc(contactName(c))}"
@@ -4845,7 +4845,7 @@ async function renderEntity(id, opts){
         <div class="cn" onclick="location.hash='contact/${c.id}'" style="cursor:pointer">${esc(contactName(c))}${c.do_not_contact?' <span class="dnc">DNC</span>':''}${c.is_key?` <span class="chip status" style="border-color:var(--accent)" title="${esc(c.key_source||'')}">KEY${c.key_role?': '+esc(c.key_role):''}</span>`:''}</div>
         ${(c.employment_title||c.is_primary)?`<div class="cr">${esc(c.employment_title||'')}${c.is_primary?' &middot; primary':''}</div>`:''}
         ${line?`<div class="cc">${line}</div>`:''}
-        <div class="cc" style="margin-top:4px">${touchChip('contact', c.id, c.last_touch_date, 'touchRefreshEntity')}</div>
+        <div class="cc" style="margin-top:4px">${touchChip('contact', c.id, c.last_touch_date, 'touchRefreshEntity')} ${nextInline('contact', c.id)}</div>
         ${contactLog(c)}
       </div>`;
     };
@@ -5717,7 +5717,7 @@ async function renderContact(id){
   let html = `<a class="back" onclick="history.back()">&larr; Back</a>
     <div class="dhead"><h1>${esc(contactName(c))}${c.do_not_contact?' <span class="dnc">DNC</span>':''}</h1>
     <div class="sub">${esc(c.title||'')}${line?(c.title?' &middot; ':'')+line:''}
-    &middot; ${touchChip('contact', c.id, c.last_touch_date, 'touchRefreshContact')}</div></div>`;
+    &middot; ${touchChip('contact', c.id, c.last_touch_date, 'touchRefreshContact')} ${nextInline('contact', c.id)}</div></div>`;
 
   html += '<div class="cols"><div>';
 
@@ -5950,7 +5950,7 @@ function paintDatabased(){
     ${rosterTh(dbSort, dbDir, 'size', 'Size', gf, 'desc')}
     ${rosterTh(dbSort, dbDir, 'built', 'Built', gf, 'desc')}
     <th>Owner found</th><th>Mailing / phone</th><th>TLO</th>
-    <th>Last Contact</th><th>Notes</th>
+    <th>Last Contact</th><th>Should Contact</th><th>Notes</th>
   </tr></thead><tbody>`;
   for(const r of rows){
     // badge portfolio/institutional owners and TLO dead ends -- these are exactly what
@@ -5972,6 +5972,7 @@ function paintDatabased(){
       <td>${built}</td>
       <td>${owner}</td><td>${contact}</td><td>${tloLinkFor(r)}</td>
       <td style="white-space:nowrap">${touchChip('property', r.id, r.is_dnc ? 'DNC' : r.last_contact, 'touchRefreshDatabased', hotOwnerTarget(r))}</td>
+      <td style="white-space:nowrap">${(t => nextInline(t.kind, t.id))(hotOwnerTarget(r))}</td>
       <td style="min-width:240px;max-width:380px">${noteCell(r, 'property', r.id)}</td>
     </tr>`;
   }
@@ -6166,7 +6167,7 @@ function paintTargets(){
       ${rosterTh(targetsSort, targetsDir, 'built', 'Built', gf, 'desc')}
       <th>Owner Type</th>
       ${rosterTh(targetsSort, targetsDir, 'owner', 'Owner', gf)}
-      <th>CoStar True Owner</th><th>NIC MAP Owner</th><th>NIC MAP Operator</th><th>Last Contact</th><th>Notes</th>
+      <th>CoStar True Owner</th><th>NIC MAP Owner</th><th>NIC MAP Operator</th><th>Last Contact</th><th>Should Contact</th><th>Notes</th>
     </tr></thead><tbody>`;
   let curKey = null;
   for(const r of rows){
@@ -6178,7 +6179,7 @@ function paintTargets(){
       curKey = key;
       const cnt = (metros.find(m => m.state===r.state && m.metro===r.metro)||{}).count || '';
       const label = targetsState ? esc(r.metro) : (esc(r.state)+' &mdash; '+esc(r.metro));
-      html += `<tr><td colspan="13" style="background:var(--accent-soft);font-weight:700;letter-spacing:.03em">${label} <span class="muted">(${cnt})</span></td></tr>`;
+      html += `<tr><td colspan="14" style="background:var(--accent-soft);font-weight:700;letter-spacing:.03em">${label} <span class="muted">(${cnt})</span></td></tr>`;
     }
     const cluster = r.owner_n>1 ? ` <span class="chip status" title="this owner appears on ${r.owner_n} target properties">&#9733; owns ${r.owner_n}</span>` : '';
     // Hand-entered owner (recorded via "+ add owner/operator" rather than a batch TLO grind
@@ -6217,6 +6218,7 @@ function paintTargets(){
       <td class="t-nic">${nicOwner}</td>
       <td class="t-nic">${nicOperator}</td>
       <td style="white-space:nowrap">${touchChip('property', r.id, r.is_dnc ? 'DNC' : r.portfolio_last_contact, 'touchRefreshTargets', hotOwnerTarget(r))}</td>
+      <td style="white-space:nowrap">${(t => nextInline(t.kind, t.id))(hotOwnerTarget(r))}</td>
       <td class="t-notes">${noteCell(r, 'property', r.id)}</td>
     </tr>`;
   }
@@ -6513,6 +6515,35 @@ async function saveNextContact(key, date){
 }
 function setNextContact(inp){ saveNextContact(inp.dataset.key, inp.value); }
 function clearNextContact(key){ saveNextContact(key, ''); }
+
+// Compact "should contact" picker for any record (Owner Targets rows, contact cards...). Same
+// colors as the Hot list: green = due or overdue, soft red = not yet. Picking a date files the
+// record under Keep in touch if it was not on the Hot list; the target is the record whose
+// flame is passed (the owner behind a roster row), else the record itself.
+function nextInline(kind, id){
+  if(!id) return '';
+  const d = HOT_NEXT.get(hotKey(kind, id)) || '';
+  const st = !d ? '' : d <= todayISO() ? 'overdue' : 'soon';
+  return `<span class="nc-wrap nc-${st}" data-hk="${esc(kind)}" data-hi="${esc(id)}" title="${d ? (st==='overdue' ? 'Due: time to call' : 'Not due yet') : 'Set a date to call again'}">
+    <input type="date" class="nc-in" value="${esc(d)}" onclick="event.stopPropagation()" onchange="setNextInline(this)">
+    ${d ? `<a class="nc-x" onclick="event.stopPropagation();setNextInline(this,'')" title="Clear date">&times;</a>` : ''}</span>`;
+}
+async function setNextInline(el, forced){
+  const w = el.closest('.nc-wrap');
+  const kind = w.dataset.hk, id = w.dataset.hi;
+  const date = forced != null ? forced : el.value;
+  const d = await apiJSON('/api/hot/next', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({kind, id, date})});
+  if(!d || d.error){ alert('Could not save: ' + ((d && d.error) || 'unknown error')); return; }
+  const key = hotKey(kind, id);
+  if(d.date) HOT_NEXT.set(key, d.date); else HOT_NEXT.delete(key);
+  if(d.stage && !HOT.has(key)){ HOT.set(key, d.stage); HOT_COUNT = d.count || HOT_COUNT; syncHotButtons(kind, id); }
+  // Every picker for this record on screen repaints, not just the one clicked.
+  document.querySelectorAll('.nc-wrap').forEach(x => {
+    if(x.dataset.hk === kind && x.dataset.hi === id) x.outerHTML = nextInline(kind, id);
+  });
+  hotToast(d.date ? '&#128222; Call again ' + esc(dmy(d.date)) : 'Next-call date cleared');
+}
 
 function hotLink(g){
   const gk = g.group_kind, gid = g.group_id;
@@ -6860,7 +6891,7 @@ function emRender(){
     <label>Message</label><textarea id="em-body">${esc(d.body)}</textarea>
     <div class="em-foot">
       <a class="em-go" onclick="emSend()">Open in Outlook</a>
-      <label style="margin:0;color:var(--text)"><input type="checkbox" id="em-attach"${d.bio_found ? ' checked' : ' disabled'}> Attach team bio${d.bio_found ? '' : ' (file not found)'}</label>
+      <label style="margin:0;color:var(--text)"><input type="checkbox" id="em-attach"${(d.bio_found || window.BS_CLOUD_APP) ? ' checked' : ' disabled'}> Attach team bio${(d.bio_found || window.BS_CLOUD_APP) ? '' : ' (file not found)'}</label>
       ${canLog ? '<label style="margin:0;color:var(--text)"><input type="checkbox" id="em-log" checked> Log it on their record</label>' : ''}
       <span class="em-msg" id="em-msg">Opens as a new message in Outlook. Nothing sends until you press Send there.</span>
     </div>
@@ -7025,7 +7056,7 @@ function paintDevelopments(){
       ${rosterTh(devSort, devDir, 'units', 'Units', gf, 'desc')}
       ${rosterTh(devSort, devDir, 'completion', 'Target Completion', gf)}
       ${rosterTh(devSort, devDir, 'owner', 'Owner/Developer', gf)}
-      <th>Contact</th><th>Last Contact</th><th>Notes</th>
+      <th>Contact</th><th>Last Contact</th><th>Should Contact</th><th>Notes</th>
     </tr></thead><tbody>`;
   let curKey = null;
   for(const r of rows){
@@ -7034,7 +7065,7 @@ function paintDevelopments(){
       curKey = key;
       const cnt = (cbsas.find(m => m.state===r.state && m.cbsa===r.cbsa)||{}).count || '';
       const label = devState ? esc(r.cbsa||'(no CBSA)') : (esc(r.state)+' &mdash; '+esc(r.cbsa||'(no CBSA)'));
-      html += `<tr><td colspan="11" style="background:var(--accent-soft);font-weight:700;letter-spacing:.03em">${label} <span class="muted">(${cnt})</span></td></tr>`;
+      html += `<tr><td colspan="12" style="background:var(--accent-soft);font-weight:700;letter-spacing:.03em">${label} <span class="muted">(${cnt})</span></td></tr>`;
     }
     const typeChip = `<span class="chip ${esc(r.asset_class||'')}" title="${esc(r.subclass||'')}">${esc(r.subclass||'?')}</span>`;
     const stageChip = `<span class="chip ${devStageClass(r.stage)}">${esc(r.stage||'?')}</span>`;
@@ -7055,6 +7086,7 @@ function paintDevelopments(){
       <td>${owner}</td>
       <td>${contact}</td>
       <td style="white-space:nowrap">${touchChip('development', r.id, r.is_dnc ? 'DNC' : r.last_contact_date, 'touchRefreshDevelopments')}</td>
+      <td style="white-space:nowrap">${nextInline('development', r.id)}</td>
       <td style="min-width:240px;max-width:380px">${noteCell(r, 'development', r.id)}</td>
     </tr>`;
   }
@@ -7383,7 +7415,7 @@ function paintAllProps(){
       <th title="Who owns the building: the one answer across TLO, CoStar, NIC MAP and what you entered">Owner</th>
       <th title="Who runs it: operator on file, else the NIC MAP brand, else the state license holder">Operator</th>
       <th>Owner Type</th><th title="Owner of record from a TLO grind or entered by you">TLO Owner</th>
-      <th>CoStar True Owner</th><th>NIC MAP Owner</th><th>Last Contact</th><th>Notes</th>
+      <th>CoStar True Owner</th><th>NIC MAP Owner</th><th>Last Contact</th><th>Should Contact</th><th>Notes</th>
     </tr></thead><tbody>`;
   let curKey = null;
   for(const r of rows){
@@ -7393,7 +7425,7 @@ function paintAllProps(){
       curKey = key;
       const cnt = (metros.find(m => m.state===r.state && m.metro===r.metro)||{}).count || '';
       const label = apState ? esc(r.metro) : (esc(r.state)+' &mdash; '+esc(r.metro));
-      html += `<tr><td colspan="14" style="background:var(--accent-soft);font-weight:700;letter-spacing:.03em">${label} <span class="muted">(${cnt})</span></td></tr>`;
+      html += `<tr><td colspan="15" style="background:var(--accent-soft);font-weight:700;letter-spacing:.03em">${label} <span class="muted">(${cnt})</span></td></tr>`;
     }
     const addedBadge = r.owner_added_by_ui
       ? `<span class="uichip" title="Entered by you in this UI, outranks the imported feeds">&#9998; yours</span>` : '';
@@ -7423,6 +7455,7 @@ function paintAllProps(){
       <td class="t-nic">${xref(r.costar_true_owner)}</td>
       <td class="t-nic">${xref(r.nicmap_owner)}</td>
       <td style="white-space:nowrap">${touchChip('property', r.id, r.is_dnc ? 'DNC' : r.last_contact, 'touchRefreshAllProps', hotOwnerTarget(r))}</td>
+      <td style="white-space:nowrap">${(t => nextInline(t.kind, t.id))(hotOwnerTarget(r))}</td>
       <td class="t-notes">${noteCell(r, 'property', r.id)}</td>
     </tr>`;
   }
@@ -7767,7 +7800,7 @@ function paintLoans(){
       ${rosterTh(lnSort, lnDir, 'maturity', 'Loan', gf)}
       ${rosterTh(lnSort, lnDir, 'rate', 'Terms', gf, 'desc')}
       ${rosterTh(lnSort, lnDir, 'sale', 'Bought', gf, 'desc')}
-      <th>Last Contact</th><th>Notes</th>
+      <th>Last Contact</th><th>Should Contact</th><th>Notes</th>
     </tr></thead><tbody>`;
   let curSig = null;
   for(const r of rows){
@@ -7775,7 +7808,7 @@ function paintLoans(){
     if(!lnSort && r.loan_signal !== curSig){
       curSig = r.loan_signal;
       const s = (d.signals||[]).find(x => x.signal === curSig) || {};
-      html += `<tr><td colspan="12" style="background:var(--accent-soft);font-weight:700;letter-spacing:.03em">${esc(s.label||curSig)} <span class="muted" style="font-weight:400">(${s.count||''}) &middot; ${esc(s.help||'')}</span></td></tr>`;
+      html += `<tr><td colspan="13" style="background:var(--accent-soft);font-weight:700;letter-spacing:.03em">${esc(s.label||curSig)} <span class="muted" style="font-weight:400">(${s.count||''}) &middot; ${esc(s.help||'')}</span></td></tr>`;
     }
     const acuity = `<span class="chip ${esc(r.asset_class||'')}" title="${esc(r.asset_label||'')}">${esc(ASSET_SHORT[r.asset_class]||r.asset_class||'?')}</span>`;
     const size = r.total_units ? num(r.total_units)+' units' : (r.certified_beds ? num(r.certified_beds)+' beds' : '<span class="empty">-</span>');
@@ -7794,6 +7827,7 @@ function paintLoans(){
       <td class="t-nic" style="white-space:nowrap">${loanTermsCell(r)}</td>
       <td style="white-space:nowrap">${lastSaleCell(r)}</td>
       <td style="white-space:nowrap">${touchChip('property', r.id, r.is_dnc ? 'DNC' : r.last_contact, 'touchRefreshLoans', hotOwnerTarget(r))}</td>
+      <td style="white-space:nowrap">${(t => nextInline(t.kind, t.id))(hotOwnerTarget(r))}</td>
       <td class="t-notes">${noteCell(r, 'property', r.id)}</td>
     </tr>`;
   }
