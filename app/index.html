@@ -7399,6 +7399,10 @@ async function renderLoans(p){
 // Data lives right here so it works on the PC app and the cloud page alike. To add a deal,
 // add one object: sale (ISO date), then the five groups. Newest sale shows first.
 const DEAL_STORIES = [
+ {name:'Poway Gardens', addr:'San Diego suburb, CA', sale:'2026-07-07', price:'$9,350,000', headline:'$170,000 per unit',
+  deal:['Sale Date: July 7, 2026','Sale Price: $9,350,000','$170,000 per unit'],
+  property:['55 Units, all MC','5 single family homes included in the sale','2002 construction'],
+  financials:[], seller:'SABRA Healthcare REIT', buyer:'Tharon Group', notes:[]},
  {name:'Santa Rosa Care Center', addr:'1650 N Santa Rosa Ave, Tucson, AZ 85712', sale:'2025-12-01', price:'$30,000,000', headline:'$209k per bed',
   deal:['Sale Date: December 1, 2025','Sale Price: $30,000,000','$209k per bed for SNF'],
   property:['144 Beds','39,685 sq ft building','1966 construction'],
@@ -7407,8 +7411,8 @@ const DEAL_STORIES = [
   deal:['Sale Date: April 1, 2025','Sale Price: $34,500,000','$156k per bed for SNF, $23.5MM SNF balance for the AL','$257k per unit for AL/MC','NO CAP on SNF'],
   property:['134 Units, 150 Beds (142 operating)','72k combined square feet','1969 construction'],
   financials:['Fully stabilized','SNF was $200k positive'], seller:'Jon B Goodman Enterprises, Inc', buyer:'CareTrust REIT, Inc / IEP / Ensign Operator', notes:[]},
- {name:'Retreat at Alameda', addr:'1920 W Alameda Rd, Phoenix, AZ 85085', sale:'2025-03-25', price:'$21,250,000', headline:'$205k per unit',
-  deal:['Sale Date: March 25, 2025','Sale Price: $21,250,000','$205k per unit'],
+ {name:'Retreat at Alameda', addr:'1920 W Alameda Rd, Phoenix, AZ 85085', sale:'2026-03-25', price:'$21,250,000', headline:'$205k per unit',
+  deal:['Sale Date: March 25, 2026','Sale Price: $21,250,000','$205k per unit'],
   property:['104 Units, 110 Beds: 72 IL and AL, 32 MC Units (38 MC Beds)','39,685 sq ft building','2021 construction'],
   financials:['$340,000 in NOI as of August 2025','75% occupied as of September 2025'], seller:'Civitas Capital', buyer:'Clarion / Stellar', notes:[]},
  {name:'Denver Skilled Nursing (Aspen Siesta)', addr:'5353 E Yale Avenue, Denver, CO 80222', sale:'2025-05-15', price:'$3,350,000', headline:'$98k per bed',
