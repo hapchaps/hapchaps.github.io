@@ -102,10 +102,23 @@
     headers.set('Authorization', 'Bearer ' + data.session.access_token);
     const r = await plain(API + url, Object.assign({}, init || {}, { headers }));
     if (r.status === 401) { step = 'password'; draw('Please sign in again.'); }
-    // No Outlook to drive from here: the email hand-off comes back as a mailto link, which
-    // opens the mail app with the draft (the bio cannot be attached that way).
+    // Email hand-off: first try the BS app running on this PC, which drives Outlook (his
+    // signature and the team bio come along). If it is not running, the cloud's answer is a
+    // mailto link, which opens the mail app with the draft but no signature or bio.
     if (url.indexOf('/api/email/open') === 0 && r.ok) {
-      try { const j = await r.clone().json(); if (j && j.mailto) location.href = j.mailto; } catch (e) {}
+      try {
+        const j = await r.clone().json();
+        if (j && j.mailto) {
+          let done = false;
+          try {
+            const b = JSON.parse((init && init.body) || '{}'); delete b.log;
+            const l = await plain('http://127.0.0.1:8000/api/email/open', { method: 'POST',
+              headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
+            done = l.ok;
+          } catch (e) {}
+          if (!done) location.href = j.mailto;
+        }
+      } catch (e) {}
     }
     return r;
   };
@@ -746,6 +759,20 @@
   .hs-sel { background: var(--hs-bg); color: var(--hs-c); border: 1px solid var(--hs-c); border-radius: 7px;
     font: inherit; font-size: 12px; font-weight: 700; padding: 3px 5px; cursor: pointer; }
   .hs-sel option { background: var(--panel); color: var(--text); }
+  .tp-next { margin: 8px 0 8px; }
+  .tp-next .tp-nbtns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .tp-nchip { padding: 2px 8px; font-size: 11px; border-radius: 999px; }
+  .tp-nchip.on { background: rgba(61,154,116,.25); border-color: #3d9a74; color: #7fd6b0; }
+  .touch-pop .tp-next input.tp-ndate, .tp-next .tp-ndate { margin-top: 6px; width: auto; padding: 2px 5px; font-size: 11px; color-scheme: dark; }
+  .tp-ncur { opacity: .6; font-weight: normal; }
+  .nc-wrap { display: inline-flex; align-items: center; gap: 4px; }
+  .nc-in { background: transparent; color: var(--text); border: 1px solid var(--border, #3a4250); border-radius: 7px;
+    padding: 2px 5px; font-size: 12px; color-scheme: dark; }
+  /* Green = time to call (due or overdue). Soft light red = not due yet. */
+  .nc-overdue .nc-in, .nc-today .nc-in { border-color: #3d9a74; color: #7fd6b0; background: rgba(61,154,116,.16); }
+  .nc-soon .nc-in { border-color: rgba(224,130,130,.45); color: #e8a3a3; background: rgba(224,130,130,.07); }
+  .nc-x { cursor: pointer; opacity: .6; font-size: 15px; }
+  .nc-x:hover { opacity: 1; }
   .hotcard.dnc { border-left-color: #ffb3d1; opacity: .75; }
   .hc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
   .hc-name { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -2392,6 +2419,7 @@ function touchChip(kind, id, dateStr, refreshFnName, hot){
 // flame asks which one rather than just toggling, and the Hot Prospects page shows one
 // bucket at a time.
 let HOT = new Map(), HOT_COUNT = 0;
+let HOT_NEXT = new Map();   // "kind:id" -> planned next-call date (YYYY-MM-DD)
 const HOT_STAGES = [
   ['not_worth',     'DNC · not worth calling',      'Not worth the time. Off the call lists'],
   ['dnc',           'DNC · yelled at, unless feeling spicy', 'Told us off. Leave them alone unless you feel spicy'],
@@ -2489,9 +2517,10 @@ async function loadHotIds(){
     // Stays quiet on purpose: this runs on every page load, and an alert here would fire
     // before Hap has asked for anything. The flames render cold, and the real message comes
     // the moment he clicks one (toggleHot) or opens the page (renderHot).
-    HOT = new Map(); HOT_COUNT = 0;
+    HOT = new Map(); HOT_COUNT = 0; HOT_NEXT = new Map();
   } else {
     HOT = new Map();
+    HOT_NEXT = new Map(Object.entries(d.nexts || {}));
     const st = d.stages || {};
     for(const k in (d.ids||{})) for(const id of d.ids[k]){
       const key = hotKey(k, id); HOT.set(key, st[key] || 'hot');
@@ -2592,6 +2621,12 @@ function noteCell(r, kind, recId){
 // Swap the cell for an editor. An imported note (source != 'ui') can't be rewritten -- the
 // server refuses that, so say so here rather than letting the save fail -- but a NEW note
 // can always be added alongside it, which is what the editor does in that case.
+// A roster row's follow-up goes on the record its flame stars (the owner), else the record
+// the note is on.
+function nextTargetForCell(w){
+  const b = w.closest('tr') ? w.closest('tr').querySelector('.hotbtn') : null;
+  return b ? [b.dataset.hk, b.dataset.hi] : [w.dataset.nk, w.dataset.nrec];
+}
 function openNoteEditor(el, fresh){
   const w = el.closest('.notecell-wrap');
   if(w.querySelector('.note-edit') && !fresh) return;   // already open
@@ -2614,6 +2649,7 @@ function openNoteEditor(el, fresh){
     <div class="row"><select class="np-type">${opts}</select><input type="date" class="np-date" value="${esc(date)}"></div>
     <textarea class="np-body" rows="4" placeholder="What happened on the call?  (Ctrl+Enter to save, Esc to cancel)"
       onkeydown="noteEditorKeys(event, this)">${esc(body)}</textarea>
+    ${(!editing || fresh) ? nextRowHTML(...nextTargetForCell(w)) : ''}
     <div class="row"><button class="btn" onclick="saveNoteCell(this)">Save</button>
       <a onclick="cancelNoteCell(this)">cancel</a>
       ${editing?`<a onclick="openNoteEditor(this, true)" title="Keep the note above and log a separate one">+ new</a>`:''}
@@ -2660,6 +2696,7 @@ async function saveNoteCell(el){
     if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
     return;
   }
+  if(!editing) await applyNext(w, date || todayISO());
   noteSaved(kind, recId, d.activity);
 }
 
@@ -2799,6 +2836,7 @@ function openTouchPop(chip){
   pop.innerHTML = (canNote ? `<select class="tp-type">${typeOpts}</select>
     <textarea class="tp-note" rows="2" placeholder="Quick note (optional) &mdash; left VM, sent email..."
       onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter')saveNoteAndDate(this)"></textarea>
+    ${nextPopRow(chip)}
     <input type="date" class="tp-date" value="${td}" onchange="if(!this.closest('.touch-pop').querySelector('.tp-note').value.trim())saveTouchFrom(this,this.value)">
     <button type="button" class="btn tp-save" onclick="saveNoteAndDate(this)">Save note &amp; date</button>
     <span class="tp-or">or just log the date</span>
@@ -2854,6 +2892,75 @@ function hotPopRow(kind, id){
     <div class="tp-hotbtns">${btns}</div></div>`;
 }
 
+// ---- "Call again in" row of the log-call popup ----
+// Picking a chip (or a date) schedules the next call in the same save as the note. The
+// target is the same record the flame stars (the owner behind a property row, say), and the
+// server files it under Keep in touch if it was not on the Hot list yet. Bucket defaults come
+// pre-selected so the common case is zero extra clicks: Hot 2 wk, Keep in touch 1 mo, Needs
+// contact 1 wk. They are skipped when a future date is already set (it would be overwritten).
+const NEXT_CHIPS = [[1,'1 day'],[3,'3 days'],[7,'1 wk'],[14,'2 wk'],[30,'1 mo'],[90,'3 mo'],[180,'6 mo']];
+const NEXT_DEFAULT_DAYS = {hot: 14, keep_in_touch: 30, needs_contact: 7};
+// Where a note's follow-up date lands: the record the flame stars (the owner behind a roster
+// row, say) when a flame sits beside the chip, else the record the note itself is on.
+function nextTargetFromChip(chip){
+  const btn = chip.parentElement && chip.parentElement.querySelector ? chip.parentElement.querySelector('.hotbtn') : null;
+  return btn ? [btn.dataset.hk, btn.dataset.hi] : [chip.dataset.touchKind, chip.dataset.touchId];
+}
+function nextPopRow(chip){ const [hk, hi] = nextTargetFromChip(chip); return nextRowHTML(hk, hi); }
+// The widget itself. State lives on its own .tp-next element, so the same row works inside the
+// log-call popup, the Call Log panel and the inline note editor on the rosters.
+function nextRowHTML(hk, hi){
+  const cur = HOT_NEXT.get(hotKey(hk, hi)) || '';
+  const def = cur && cur > todayISO() ? 0 : (NEXT_DEFAULT_DAYS[hotStage(hk, hi)] || 0);
+  const chips = NEXT_CHIPS.map(([n, l]) => `<button type="button" class="btn tp-nchip${def===n?' on':''}" onclick="pickNext(this,${n})">${l}</button>`).join('')
+    + `<button type="button" class="btn tp-nchip" onclick="pickNext(this,'none')" title="No follow-up planned">None</button>`;
+  return `<div class="tp-next" data-hk="${esc(hk)}" data-hi="${esc(hi)}"${def ? ` data-next-days="${def}"` : ''}>
+    <div class="tp-hotlbl">&#128222; Call again in${cur ? ` <span class="tp-ncur">(now ${esc(cur)})</span>` : ''}</div>
+    <div class="tp-nbtns">${chips}</div>
+    <input type="date" class="tp-ndate" title="Or pick an exact date" onchange="pickNextDate(this)"></div>`;
+}
+function pickNext(btn, v){
+  const box = btn.closest('.tp-next');
+  const was = btn.classList.contains('on');
+  box.querySelectorAll('.tp-nchip').forEach(b => b.classList.remove('on'));
+  box.querySelector('.tp-ndate').value = '';
+  delete box.dataset.nextDate;
+  if(was){ delete box.dataset.nextDays; return; }    // click again = leave the date alone
+  btn.classList.add('on'); box.dataset.nextDays = v;
+}
+function pickNextDate(inp){
+  const box = inp.closest('.tp-next');
+  box.querySelectorAll('.tp-nchip').forEach(b => b.classList.remove('on'));
+  delete box.dataset.nextDays;
+  if(inp.value) box.dataset.nextDate = inp.value; else delete box.dataset.nextDate;
+}
+// The date the row's choice resolves to, counted from the call date: '' clears, null = untouched.
+function resolveNext(box, callDate){
+  if(box.dataset.nextDate) return box.dataset.nextDate;
+  const v = box.dataset.nextDays;
+  if(!v) return null;
+  if(v === 'none') return '';
+  const base = /^\d{4}-\d{2}-\d{2}$/.test(callDate || '') ? new Date(callDate + 'T12:00:00') : new Date();
+  base.setDate(base.getDate() + Number(v));
+  return base.getFullYear() + '-' + String(base.getMonth()+1).padStart(2,'0') + '-' + String(base.getDate()).padStart(2,'0');
+}
+// Save whatever the row says, after the note has been written. Quiet on failure: the note is
+// already saved, so a hiccup here only costs the follow-up date, and says so.
+async function applyNext(root, callDate){
+  const box = root && root.querySelector ? root.querySelector('.tp-next') : null;
+  if(!box) return;
+  const date = resolveNext(box, callDate);
+  if(date === null) return;
+  const kind = box.dataset.hk, id = box.dataset.hi;
+  const d = await apiJSON('/api/hot/next', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({kind, id, date})});
+  if(!d || d.error){ hotToast('Note saved, but the next-call date was not'); return; }
+  const key = hotKey(kind, id);
+  if(d.date) HOT_NEXT.set(key, d.date); else HOT_NEXT.delete(key);
+  if(d.stage && !HOT.has(key)){ HOT.set(key, d.stage); HOT_COUNT = d.count || HOT_COUNT; syncHotButtons(kind, id); }
+  hotToast(d.date ? '&#128222; Call again ' + esc(dmy(d.date)) : 'Next-call date cleared');
+}
+
 function saveNoteAndDate(el){
   const pop = el.closest('.touch-pop');
   return saveTouchFrom(el, pop.querySelector('.tp-date').value || todayISO());
@@ -2889,6 +2996,7 @@ async function saveTouchFrom(el, date){
     const d = await r.json();
     if(d.error){ alert('Could not save: '+d.error); closeTouchPop(); return; }
     lastTouchResult = d;
+    if(date && date !== 'DNC') await applyNext(pop, date);   // "Call again in" choice, if any
   } catch(e){
     alert('Could not reach the server.'); closeTouchPop(); return;
   }
@@ -3002,12 +3110,12 @@ function notesPanel(pid, acts){
 // a development.
 function notesBlock(kind, id, acts){
   return `<div class="notes-block">
-    ${noteForm()}
+    ${noteForm(kind, id)}
     <div class="notes-list" data-kind="${kind}" data-id="${esc(id)}">${notesListHTML(acts)}</div>
   </div>`;
 }
 
-function noteForm(){
+function noteForm(kind, id){
   const opts = NOTE_TYPES.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
   return `<div class="note-form">
     <div class="row">
@@ -3020,6 +3128,7 @@ function noteForm(){
     </div>
     <textarea class="nf-body" rows="2" placeholder="Log a call...  (Ctrl+Enter to save)"
       onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter')addNoteFrom(this)"></textarea>
+    ${kind && id ? nextRowHTML(kind, id) : ''}
     <div class="row"><button class="btn" onclick="addNoteFrom(this)">Save note</button></div>
   </div>`;
 }
@@ -3144,6 +3253,7 @@ async function addNoteFrom(el){
   const r = await fetch('/api/activities', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
   const d = await r.json();
   if(d.error){ alert('Could not save note: '+d.error); return; }
+  await applyNext(block, date || todayISO());
   ta.value=''; reloadList(list);
 }
 
@@ -6156,6 +6266,7 @@ let hotLast = null, hotState = '', hotSort = 'stale', hotDir = '', hotStageTab =
 const hotOpen = new Set();   // owner rows expanded to their full card; survives refetches
 const HOT_SORTS = [
   ['stale', 'Longest since contact'],
+  ['due', 'Should contact date'],
   ['added', 'Recently added'],
   ['name', 'Owner name'],
   ['units', 'Size'],
@@ -6345,7 +6456,9 @@ function paintHot(keepScroll){
   let html = head + `<div class="panel targets-panel" style="margin-top:0"><table class="cl hotrows">
     <thead><tr><th></th><th>Owner</th><th>What they own</th><th>Main contact</th>
       <th onclick="setHotSort('stale')" style="cursor:pointer;white-space:nowrap;user-select:none"
-        title="Click to sort oldest first or newest first">Last contact${hotSort === 'stale' ? (hotDir === 'desc' ? ' &#9660;' : ' &#9650;') : ' &#8645;'}</th><th>Latest note</th><th>Bucket</th></tr></thead><tbody>`;
+        title="Click to sort oldest first or newest first">Last contact${hotSort === 'stale' ? (hotDir === 'desc' ? ' &#9660;' : ' &#9650;') : ' &#8645;'}</th>
+      <th onclick="setHotSort('due')" style="cursor:pointer;white-space:nowrap;user-select:none"
+        title="Click to sort soonest planned call first. Undated owners sink to the bottom.">Should contact${hotSort === 'due' ? (hotDir === 'desc' ? ' &#9660;' : ' &#9650;') : ' &#8645;'}</th><th>Latest note</th><th>Bucket</th></tr></thead><tbody>`;
   for(const g of rows){
     const gk = g.group_kind, gid = g.group_id, open = hotOpen.has(g.key);
     const mc = g.main_contact;
@@ -6366,15 +6479,40 @@ function paintHot(keepScroll){
       <td class="hr-own">${own}</td>
       <td>${mcHtml}</td>
       <td style="white-space:nowrap">${touchChip(gk, gid, g.is_dnc ? 'DNC' : g.last_contact, 'touchRefreshHot', false)}</td>
+      <td style="white-space:nowrap">${nextContactCell(g)}</td>
       <td class="t-notes">${notePreview(g)}</td>
       <td><select class="hs-sel st-${esc(g.stage)}" data-key="${esc(g.key)}" onchange="moveHotGroup(this)" title="Move to another bucket">${opts}</select></td>
     </tr>`;
-    if(open) html += `<tr class="hot-detail"><td colspan="7">${hotCardHTML(g)}</td></tr>`;
+    if(open) html += `<tr class="hot-detail"><td colspan="8">${hotCardHTML(g)}</td></tr>`;
   }
   html += `</tbody></table></div>`;
   app.innerHTML = html;
   if(!keepScroll) window.scrollTo(0, 0);
 }
+
+// "Should contact" cell: a date picker colored by urgency (red overdue, amber today, green
+// upcoming). Saved per owner card; every star on the card takes the date.
+function nextContactCell(g){
+  const d = g.next_contact || '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const iso = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+  const st = !d ? '' : d < iso ? 'overdue' : d === iso ? 'today' : 'soon';
+  const tip = st === 'overdue' ? 'Due: time to call them' : st === 'today' ? 'Call today' : 'Not due yet';
+  return `<span class="nc-wrap nc-${st}" title="${esc(tip)}">
+    <input type="date" class="nc-in" value="${esc(d)}" data-key="${esc(g.key)}" onchange="setNextContact(this)">
+    ${d ? `<a class="nc-x" onclick="clearNextContact('${esc(g.key)}')" title="Clear date">&times;</a>` : ''}</span>`;
+}
+async function saveNextContact(key, date){
+  const g = (hotLast && hotLast.prospects || []).find(x => x.key === key);
+  if(!g) return;
+  const d = await apiJSON('/api/hot/next', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({refs: g.refs, date})});
+  if(!d || d.error){ alert('Could not save.\n\n' + ((d && d.error) || 'unknown error')); return; }
+  g.next_contact = d.date || null;
+  paintHot(true);
+}
+function setNextContact(inp){ saveNextContact(inp.dataset.key, inp.value); }
+function clearNextContact(key){ saveNextContact(key, ''); }
 
 function hotLink(g){
   const gk = g.group_kind, gid = g.group_id;
