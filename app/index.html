@@ -1905,7 +1905,7 @@ async function signalDismiss(id){
 }
 
 function briefHTML(b){
-  const dateStr = new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'numeric', year:'numeric'}).replace(',', '');
+  const dateStr = new Date().toLocaleDateString('en-US', {weekday:'long', month:'numeric', day:'numeric', year:'numeric'}).replace(',', '');
   let h = `<h2>Today<span class="brief-date">${esc(dateStr)}</span></h2>`;
 
   h += briefSection('Hot Prospects gone quiet',
@@ -2376,17 +2376,17 @@ function todayISO(){ const d=new Date(); const l=new Date(d.getTime()-d.getTimez
 // small clickable chip. Click it, type what happened, hit Save (or just pin a date).
 // Hap, 2026-09-17: it reads "Log call" and carries no icon -- calls are what gets logged
 // here, and a phone glyph beside the words said nothing the words didn't.
-// Hap, 2026-11-19: every full date reads day/month/year (19/11/2026). Month-and-year
+// Hap, 2026-11-20: every full date reads month/day/year (11/19/2026). Month-and-year
 // dates (comps, loans) stay as monthYear().
-function dmy(s){
+function mdy(s){
   if(!s) return '';
   const bits = String(s).slice(0,10).split('-');
   if(bits.length !== 3 || bits.some(b => !/^\d+$/.test(b))) return s;
-  return bits[2].padStart(2,'0')+'/'+bits[1].padStart(2,'0')+'/'+bits[0];
+  return bits[1].padStart(2,'0')+'/'+bits[2].padStart(2,'0')+'/'+bits[0];
 }
 function fmtTouchDate(s){
   if(!s) return null;
-  return dmy(s);
+  return mdy(s);
 }
 // kind: 'property' | 'entity' | 'contact'. refreshFnName is the NAME of a global function
 // (called by name, not a closure) that re-fetches and repaints wherever this chip lives --
@@ -2958,7 +2958,7 @@ async function applyNext(root, callDate){
   const key = hotKey(kind, id);
   if(d.date) HOT_NEXT.set(key, d.date); else HOT_NEXT.delete(key);
   if(d.stage && !HOT.has(key)){ HOT.set(key, d.stage); HOT_COUNT = d.count || HOT_COUNT; syncHotButtons(kind, id); }
-  hotToast(d.date ? '&#128222; Call again ' + esc(dmy(d.date)) : 'Next-call date cleared');
+  hotToast(d.date ? '&#128222; Call again ' + esc(mdy(d.date)) : 'Next-call date cleared');
 }
 
 function saveNoteAndDate(el){
@@ -3183,7 +3183,7 @@ function notesListHTML(acts){
     h += `<div class="note${a.via?' borrowed':''}" data-id="${esc(a.id)}" data-type="${esc(a.activity_type)}" data-date="${esc(dt)}" data-body="${esc(a.body)}">
       <div class="note-head">
         <span class="note-type ${esc(a.activity_type)}">${esc(noteTypeLabel(a.activity_type))}</span>
-        <span class="note-date">${esc(dmy(dt))}</span>
+        <span class="note-date">${esc(mdy(dt))}</span>
         <span class="note-actions">${actions}</span>
       </div>
       <div class="note-body">${esc(a.body)}</div>
@@ -6542,7 +6542,7 @@ async function setNextInline(el, forced){
   document.querySelectorAll('.nc-wrap').forEach(x => {
     if(x.dataset.hk === kind && x.dataset.hi === id) x.outerHTML = nextInline(kind, id);
   });
-  hotToast(d.date ? '&#128222; Call again ' + esc(dmy(d.date)) : 'Next-call date cleared');
+  hotToast(d.date ? '&#128222; Call again ' + esc(mdy(d.date)) : 'Next-call date cleared');
 }
 
 function hotLink(g){
@@ -8943,7 +8943,7 @@ async function loadSignedInUser(){
 function fmtWhen(iso){
   if(!iso) return '';
   const d = new Date(iso.endsWith('Z')?iso:iso+'Z');
-  return isNaN(d) ? iso : d.toLocaleString('en-GB');
+  return isNaN(d) ? iso : d.toLocaleString('en-US');
 }
 function relWhen(iso){
   if(!iso) return '';
@@ -8954,7 +8954,7 @@ function relWhen(iso){
   if(s<3600) return Math.floor(s/60)+'m ago';
   if(s<86400) return Math.floor(s/3600)+'h ago';
   if(s<86400*30) return Math.floor(s/86400)+'d ago';
-  return dmy(d.toISOString());
+  return mdy(d.toISOString());
 }
 
 // The comp's own buyer_entity_id/seller_entity_id are set at ingest against t.buyer_name/
@@ -8971,7 +8971,7 @@ function compFieldEntityId(t, f){
 
 function compFieldRow(txId, f, t){
   const conf = f.confirmed_by
-    ? `<span class="pf-conf ${f.confirmed_stale?'stale':'on'}" title="${f.confirmed_stale?'Confirmed value has since changed':'Confirmed by '+esc(f.confirmed_by)+' on '+esc(dmy(f.confirmed_at))}" onclick="compConfirm('${esc(txId)}','${esc(f.field)}',false)">&#10003; ${esc(f.confirmed_by)}</span>`
+    ? `<span class="pf-conf ${f.confirmed_stale?'stale':'on'}" title="${f.confirmed_stale?'Confirmed value has since changed':'Confirmed by '+esc(f.confirmed_by)+' on '+esc(mdy(f.confirmed_at))}" onclick="compConfirm('${esc(txId)}','${esc(f.field)}',false)">&#10003; ${esc(f.confirmed_by)}</span>`
     : `<span class="pf-conf" title="Mark this data point as confirmed" onclick="compConfirm('${esc(txId)}','${esc(f.field)}',true)">&#10003;</span>`;
   // Clearing is only offered where a feed can take over, so the button never implies an
   // edit is destructive when it is not.
