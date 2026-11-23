@@ -2530,13 +2530,13 @@ async function loadHotIds(){
   paintHotCount();
 }
 let hotToastTimer = null;
-function hotToast(msg){
+function hotToast(msg, ms){
   let el = document.getElementById('hot-toast');
   if(!el){ el = document.createElement('div'); el.id = 'hot-toast'; el.className = 'hot-toast';
     document.body.appendChild(el); }
   el.innerHTML = msg;
   clearTimeout(hotToastTimer);
-  hotToastTimer = setTimeout(()=>{ el.remove(); }, 2200);
+  hotToastTimer = setTimeout(()=>{ el.remove(); }, ms || 2200);
 }
 // Repaint every flame on screen for this record -- the same owner/contact can be showing in
 // several places at once (a roster row, the Recent sidebar's target, an open profile).
@@ -2684,6 +2684,8 @@ async function saveNoteCell(el){
   const url = editing ? '/api/activities/'+encodeURIComponent(w.dataset.nid) : '/api/activities';
   const payload = {activity_type:type, occurred_at:occurred, body};
   if(!editing) payload[kind==='development'?'development_id':'property_id'] = recId;
+  const np = editing ? null : nextPayload(w, date || todayISO());
+  if(np) payload.next_contact = np;
   const btn = w.querySelector('.btn');
   if(btn){ btn.disabled = true; btn.textContent = 'Saving...'; }
   let d = null;
@@ -2696,7 +2698,7 @@ async function saveNoteCell(el){
     if(btn){ btn.disabled = false; btn.textContent = 'Save'; }
     return;
   }
-  if(!editing) await applyNext(w, date || todayISO());
+  if(np) absorbNext(np, d.next || {error: 'The server did not answer for the call-again date (is it running the latest version? Restart BS).'});
   noteSaved(kind, recId, d.activity);
 }
 
@@ -2925,7 +2927,8 @@ function pickNext(btn, v){
   box.querySelectorAll('.tp-nchip').forEach(b => b.classList.remove('on'));
   box.querySelector('.tp-ndate').value = '';
   delete box.dataset.nextDate;
-  if(was){ delete box.dataset.nextDays; return; }    // click again = leave the date alone
+  // Clicking a chip always selects it. (It used to toggle off, so tapping the pre-selected
+  // default -- 1 mo on Keep in touch -- cleared it and nothing was saved.) "None" clears.
   btn.classList.add('on'); box.dataset.nextDays = v;
 }
 function pickNextDate(inp){
@@ -2944,21 +2947,34 @@ function resolveNext(box, callDate){
   base.setDate(base.getDate() + Number(v));
   return base.getFullYear() + '-' + String(base.getMonth()+1).padStart(2,'0') + '-' + String(base.getDate()).padStart(2,'0');
 }
-// Save whatever the row says, after the note has been written. Quiet on failure: the note is
-// already saved, so a hiccup here only costs the follow-up date, and says so.
-async function applyNext(root, callDate){
+// What the row asks for, shaped for the note save: the follow-up date travels in the SAME
+// request as the note, so the two cannot get out of step. null = the row was left alone.
+function nextPayload(root, callDate){
   const box = root && root.querySelector ? root.querySelector('.tp-next') : null;
-  if(!box) return;
+  if(!box) return null;
   const date = resolveNext(box, callDate);
-  if(date === null) return;
-  const kind = box.dataset.hk, id = box.dataset.hi;
-  const d = await apiJSON('/api/hot/next', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({kind, id, date})});
-  if(!d || d.error){ hotToast('Note saved, but the next-call date was not'); return; }
-  const key = hotKey(kind, id);
-  if(d.date) HOT_NEXT.set(key, d.date); else HOT_NEXT.delete(key);
-  if(d.stage && !HOT.has(key)){ HOT.set(key, d.stage); HOT_COUNT = d.count || HOT_COUNT; syncHotButtons(kind, id); }
-  hotToast(d.date ? '&#128222; Call again ' + esc(mdy(d.date)) : 'Next-call date cleared');
+  return date === null ? null : {kind: box.dataset.hk, id: box.dataset.hi, date};
+}
+// Take the server's answer about the follow-up date: update the local picture and say so, or
+// say exactly why it failed (the note itself is already saved by then).
+function absorbNext(np, res){
+  if(!np) return;
+  if(!res || res.error){
+    alert('The note was saved, but the call-again date was not.\n\n'
+      + ((res && res.error) || 'The server sent no answer for it.') + '\n\n(' + np.kind + ' ' + np.id + ')');
+    return;
+  }
+  const key = hotKey(np.kind, np.id);
+  if(res.date) HOT_NEXT.set(key, res.date); else HOT_NEXT.delete(key);
+  if(res.stage && !HOT.has(key)){ HOT.set(key, res.stage); HOT_COUNT = res.count || HOT_COUNT; syncHotButtons(np.kind, np.id); }
+  hotToast(res.date ? '&#128222; Call again ' + esc(mdy(res.date)) : 'Next-call date cleared');
+}
+// Date only (no note to carry it): its own request.
+async function applyNext(root, callDate){
+  const np = nextPayload(root, callDate);
+  if(!np) return;
+  absorbNext(np, await apiJSON('/api/hot/next', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(np)}));
 }
 
 function saveNoteAndDate(el){
@@ -2973,6 +2989,7 @@ async function saveTouchFrom(el, date){
   // "Clear date" is an undo -- saving a note alongside it would immediately re-stamp the
   // date it just cleared (the server bumps last-contact from any note), so skip it there.
   const body = (date === '' || !noteEl) ? '' : noteEl.value.trim();
+  let nextNp = null, nextDone = null;
   pop.style.opacity = '.5'; pop.style.pointerEvents = 'none';
   try {
     // Note first, then the date pin: writing a note bumps the record's last-contact date on
@@ -2982,6 +2999,7 @@ async function saveTouchFrom(el, date){
       const occurred = (date && date !== 'DNC') ? date + 'T12:00:00Z' : todayISO() + 'T12:00:00Z';
       const payload = {activity_type: pop.querySelector('.tp-type').value, occurred_at: occurred, body};
       payload[ACT_ID_KEY[kind] || 'property_id'] = id;
+      if(date && date !== 'DNC'){ nextNp = nextPayload(pop, date); if(nextNp) payload.next_contact = nextNp; }
       const nr = await fetch('/api/activities', {method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload)});
       const nd = await nr.json();
@@ -2990,13 +3008,17 @@ async function saveTouchFrom(el, date){
         pop.style.opacity = ''; pop.style.pointerEvents = '';
         return;
       }
+      if(nextNp) nextDone = nd.next || {error: 'The server did not answer for the call-again date (is it running the latest version? Restart BS).'};
     }
     const r = await fetch('/api/touch', {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({kind, id, date})});
     const d = await r.json();
     if(d.error){ alert('Could not save: '+d.error); closeTouchPop(); return; }
     lastTouchResult = d;
-    if(date && date !== 'DNC') await applyNext(pop, date);   // "Call again in" choice, if any
+    // "Call again in": with a note it already rode along in the note's request; otherwise
+    // it goes on its own.
+    if(nextNp) absorbNext(nextNp, nextDone);
+    else if(date && date !== 'DNC') await applyNext(pop, date);
   } catch(e){
     alert('Could not reach the server.'); closeTouchPop(); return;
   }
@@ -3250,10 +3272,12 @@ async function addNoteFrom(el){
   payload[ACT_ID_KEY[kind] || 'property_id'] = id;
   // A note written on a person while a property page is open belongs to that building too.
   if(kind==='contact' && curPid) payload.property_id = curPid;
+  const np = nextPayload(block, date || todayISO());
+  if(np) payload.next_contact = np;
   const r = await fetch('/api/activities', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
   const d = await r.json();
   if(d.error){ alert('Could not save note: '+d.error); return; }
-  await applyNext(block, date || todayISO());
+  if(np) absorbNext(np, d.next || {error: 'The server did not answer for the call-again date (is it running the latest version? Restart BS).'});
   ta.value=''; reloadList(list);
 }
 
